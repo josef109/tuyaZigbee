@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"path": ".."
+		},
+		{
+			"path": "../../../../Zigbee_SDK"
+		}
+	],
+	"settings": {
+		"C_Cpp.dimInactiveRegions": false
+	}
+}

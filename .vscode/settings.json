@@ -1,0 +1,10 @@
+{
+       "cmake.sourceDirectory": "${workspaceFolder}",
+       "cmake.configureSettings": {
+              "SDK_PREFIX": "/home/beppo/Zigbee_SDK/tl_zigbee_sdk",
+              "TOOLCHAIN_PREFIX": "/usr/lib/tc32",
+              "CMAKE_BUILD_TYPE": "${buildType}"
+       },
+       "cmake.configureOnOpen": true,
+       "cmake.setBuildTypeOnMultiConfig": false
+}
