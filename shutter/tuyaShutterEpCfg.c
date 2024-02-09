@@ -242,8 +242,8 @@ zcl_WindowCoveringAttr_t g_zcl_WindowCoveringAttrs =
 		.NumOfActuationsLift = 0,
 		.NumOfActuationsTilt = 0,
 		.ConfigStatus = 3,
-		.CurrentPositionLiftPercentage = 0xff,
-		.CurrentPositionTiltPercentage = 0xff,
+		.CurrentPositionLiftPercentage = 0,
+		.CurrentPositionTiltPercentage = 0,
 		.InstalledOpenLimitLift = 0,
 		.InstalledClosedLimitLift = 0xffff,
 		.InstalledOpenLimitTilt = 0,
@@ -295,7 +295,7 @@ const zclAttrInfo_t window_covering_attrTbl[] =
 		{ZCL_ATTRID_INSTALLED_CLOSED_LIMIT_LIFT, ZCL_DATA_TYPE_UINT16, ACCESS_CONTROL_READ, (u8 *)&g_zcl_WindowCoveringAttrs.InstalledClosedLimitLift},
 		{ZCL_ATTRID_INSTALLED_OPEN_LIMIT_TILT, ZCL_DATA_TYPE_UINT16, ACCESS_CONTROL_READ, (u8 *)&g_zcl_WindowCoveringAttrs.InstalledOpenLimitTilt},
 		{ZCL_ATTRID_INSTALLED_CLOSED_LIMIT_TILT, ZCL_DATA_TYPE_UINT16, ACCESS_CONTROL_READ, (u8 *)&g_zcl_WindowCoveringAttrs.InstalledClosedLimitTilt},
-		{ZCL_ATTRID_MODE, ZCL_DATA_TYPE_UINT8, ACCESS_CONTROL_READ, (u8 *)&g_zcl_WindowCoveringAttrs.Mode},
+		{ZCL_ATTRID_MODE, ZCL_DATA_TYPE_UINT8, ACCESS_CONTROL_READ | ACCESS_CONTROL_WRITE, (u8 *)&g_zcl_WindowCoveringAttrs.Mode},
 		{ZCL_ATTRID_GLOBAL_CLUSTER_REVISION, ZCL_DATA_TYPE_UINT16, ACCESS_CONTROL_READ, (u8 *)&zcl_attr_global_clusterRevision},
 };
 
@@ -375,11 +375,10 @@ nv_sts_t zcl_WindowCoveringAttr_restore(void)
 {
 	nv_sts_t st = NV_SUCC;
 
-#ifdef ZCL_ON_OFF
 #if NV_ENABLE
-	zcl_nv_onOff_t zcl_nv_onOff;
+	zcl_nv_WindowCovering_t zcl_nv_WindowCovering;
 
-	st = nv_flashReadNew(1, NV_MODULE_ZCL, NV_ITEM_ZCL_WINDOWCOVERING, sizeof(zcl_nv_Lift_t), (u8 *)&zcl_nv_Lift);
+	st = nv_flashReadNew(1, NV_MODULE_ZCL, NV_ITEM_ZCL_WINDOWCOVERING, sizeof(zcl_nv_WindowCovering_t), (u8 *)&zcl_nv_WindowCovering);
 
 	if (st == NV_SUCC)
 	{
@@ -390,7 +389,6 @@ nv_sts_t zcl_WindowCoveringAttr_restore(void)
 	}
 #else
 	st = NV_ENABLE_PROTECT_ERROR;
-#endif
 #endif
 
 	return st;

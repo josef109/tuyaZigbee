@@ -42,7 +42,7 @@
 #endif
 
 #define APP_RELEASE                          0x10//app release 1.0
-#define APP_BUILD                            0x03//app build 01
+#define APP_BUILD                            0x01//app build 01
 #define STACK_RELEASE                        0x30//stack release 3.0
 #define STACK_BUILD                          0x03//zigbee sdk 3.6.8.3
 #define HARDWARE_REV                         0x01
@@ -51,11 +51,11 @@
     #define ZCL_BASIC_MFG_NAME          {5,'B','e','p','p','o'}
 #endif
 #ifndef ZCL_BASIC_MODEL_ID
-    #define ZCL_BASIC_MODEL_ID          {13,'F','i','x','e','d','_','T','S','0','5','0','1','B'} //TS0501B - CW
+    #define ZCL_BASIC_MODEL_ID          {12,'L','o','r','a','T','a','p','_','Z','T','3','L'} //TS0501B - CW
 #endif
 
 #ifndef ZCL_BASIC_DATE_CODE
-	#define ZCL_BASIC_DATE_CODE    {8,'2','0','2','4','0','5','1','0'}
+	#define ZCL_BASIC_DATE_CODE    {8,'2','0','2','4','0','2','1','0'}
 #endif
 
 #ifndef ZCL_BASIC_LOC_DESC
@@ -72,8 +72,8 @@
  * Refer to ZCL OTA specification for details.
  */
 // Note it is not real Telink ID, just to make SDK happy
-#define MANUFACTURER_CODE_TELINK             0x6464 // updated manuf code //0x1141//Telink ID
-#define    IMAGE_TYPE                        ((CHIP_TYPE << 8) | IMAGE_TYPE_LIGHT_0501B)
+#define MANUFACTURER_CODE_TELINK             0x7464 // updated manuf code //0x1141//Telink ID
+#define    IMAGE_TYPE                        ((CHIP_TYPE << 8) | IMAGE_TYPE_SHUTTER_LORA)
 
 //#define    IMAGE_TYPE                        0xD3A3 //for tuya OTA
 #define    FILE_VERSION                      ((APP_RELEASE << 24) | (APP_BUILD << 16) | (STACK_RELEASE << 8) | STACK_BUILD)

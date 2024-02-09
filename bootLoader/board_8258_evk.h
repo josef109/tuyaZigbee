@@ -30,86 +30,68 @@
 extern "C" {
 #endif
 
-
 // BUTTON
-#define BUTTON1               GPIO_PD2
-#define PD2_FUNC			  AS_GPIO
-#define PD2_OUTPUT_ENABLE	  0
-#define PD2_INPUT_ENABLE	  1
-#define	PULL_WAKEUP_SRC_PD2	  PM_PIN_PULLUP_10K
+#define BUTTON1               		GPIO_PD1
+#define PD1_FUNC			  		AS_GPIO
+#define PD1_OUTPUT_ENABLE	  		0
+#define PD1_INPUT_ENABLE	  		1
+#define	PULL_WAKEUP_SRC_PD1	  		PM_PIN_PULLUP_10K
 
-// #define BUTTON2               GPIO_PD2
-// #define PD2_FUNC			  AS_GPIO
-// #define PD2_OUTPUT_ENABLE	  0
-// #define PD2_INPUT_ENABLE	  1
-// #define	PULL_WAKEUP_SRC_PD2	  PM_PIN_PULLUP_10K
-
-// INPUTS
-#define BUTTON_UP             GPIO_PD4
-#define PD4_FUNC			  AS_GPIO
-#define PD4_OUTPUT_ENABLE	  0
-#define PD4_INPUT_ENABLE	  1
-#define	PULL_WAKEUP_SRC_PD4	  PM_PIN_PULLUP_10K
-
-#define BUTTON_DOWN           GPIO_PC3
-#define PC3_FUNC			  AS_GPIO
-#define PC3_OUTPUT_ENABLE	  0
-#define PC3_INPUT_ENABLE	  1
-#define	PULL_WAKEUP_SRC_PC3	  PM_PIN_PULLUP_10K
-
+#define BUTTON2               		GPIO_PD2
+#define PD2_FUNC			  		AS_GPIO
+#define PD2_OUTPUT_ENABLE	  		0
+#define PD2_INPUT_ENABLE	  		1
+#define	PULL_WAKEUP_SRC_PD2	  		PM_PIN_PULLUP_10K
 
 // LED
+#define LED_G     					GPIO_PD4
+#define PD4_FUNC					AS_GPIO
+#define PD4_OUTPUT_ENABLE			1
+#define PD4_INPUT_ENABLE			0
 
-#define LED_R						GPIO_PA0
+#define LED_R     					GPIO_PD0
+#define PD0_FUNC					AS_GPIO
+#define PD0_OUTPUT_ENABLE			1
+#define PD0_INPUT_ENABLE			0
 
-#define PA0_FUNC					AS_GPIO
-#define PA0_OUTPUT_ENABLE			1
-#define PA0_INPUT_ENABLE			0
-
-#define LED_PERMIT					LED_R
-
-// RELAY
-#define RELAY_UP					GPIO_PC0
-#define RELAY_DOWN					GPIO_PC2
-
-#define PC0_FUNC					AS_GPIO
-#define PC0_OUTPUT_ENABLE			1
-#define PC0_INPUT_ENABLE			0
-
-#define PC2_FUNC					AS_GPIO
-#define PC2_OUTPUT_ENABLE			1
-#define PC2_INPUT_ENABLE			0
-
-
+#define LED_POWER					LED_R
+#define LED_PERMIT					LED_G
 
 // UART
-#if ZBHCI_UART
-	#error please configurate uart PIN!!!!!!
-#endif
+#if UART_ENABLE
+	#define UART_TX_PIN         	UART_TX_PB1
+	#define UART_RX_PIN         	UART_RX_PB0
 
+	#define UART_PIN_CFG()			uart_gpio_set(UART_TX_PIN, UART_RX_PIN);// uart tx/rx pin set
+#endif
 
 // DEBUG
 #if UART_PRINTF_MODE
-	#define	DEBUG_INFO_TX_PIN	    GPIO_PB1			//print
+	#define	DEBUG_INFO_TX_PIN	    GPIO_PC7//print
+#endif
+
+// USB
+#if ZBHCI_USB_PRINT || ZBHCI_USB_CDC || ZBHCI_USB_HID
+	#define HW_USB_CFG()			do{ \
+										usb_set_pin_en();	\
+									}while(0)
 #endif
 
 
 enum{
 	VK_SW1 = 0x01,
-	VK_SW2 = 0x02,
-	VK_SW3 = 0x02,
+	VK_SW2 = 0x02
 };
 
 #define	KB_MAP_NORMAL	{\
 		{VK_SW1,}, \
-		{VK_SW2,}, \
-		{VK_SW3,}, }
+		{VK_SW2,}, }
 
 #define	KB_MAP_NUM		KB_MAP_NORMAL
 #define	KB_MAP_FN		KB_MAP_NORMAL
 
 #define KB_DRIVE_PINS  {NULL }
-#define KB_SCAN_PINS   {BUTTON1, BUTTON_DOWN, BUTTON_UP}
+#define KB_SCAN_PINS   {BUTTON1,  BUTTON2}
 
 
 /* Disable C linkage for C++ Compilers: */

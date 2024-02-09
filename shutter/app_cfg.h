@@ -40,7 +40,7 @@ extern "C" {
  * Product Information
  */
 /* Debug mode config */
-#define	UART_PRINTF_MODE				0
+#define	UART_PRINTF_MODE				1
 #define USB_PRINTF_MODE         		0
 
 /* HCI interface */
@@ -48,7 +48,7 @@ extern "C" {
 
 
 /* BDB */
-#define TOUCHLINK_SUPPORT				1
+#define TOUCHLINK_SUPPORT				0
 #define FIND_AND_BIND_SUPPORT			0
 
 /* Board ID */

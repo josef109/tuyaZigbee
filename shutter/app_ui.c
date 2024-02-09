@@ -66,13 +66,83 @@ void led_init(void){
 }
 
 void localPermitJoinState(void){
-	static bool assocPermit = 0;
-	if(assocPermit != zb_getMacAssocPermit()){
-		assocPermit = zb_getMacAssocPermit();
-		if(assocPermit){
-			led_on(LED_PERMIT);
+	// static bool assocPermit = 0;
+	// if(assocPermit != zb_getMacAssocPermit()){
+	// 	assocPermit = zb_getMacAssocPermit();
+	// 	if(assocPermit){
+	// 		led_on(LED_PERMIT);
+	// 	}else{
+	// 		led_off(LED_PERMIT);
+	// 	}
+	// }
+}
+
+void light_on(void)
+{
+	led_on(LED_PERMIT);
+}
+
+void light_off(void)
+{
+	led_off(LED_PERMIT);
+}
+
+s32 zclLightTimerCb(void *arg)
+{
+	u32 interval = 0;
+
+	if(gShutterCtx.sta == gShutterCtx.oriSta){
+		gShutterCtx.times--;
+		if(gShutterCtx.times <= 0){
+			gShutterCtx.timerLedEvt = NULL;
+			return -1;
+		}
+	}
+
+	gShutterCtx.sta = !gShutterCtx.sta;
+	if(gShutterCtx.sta){
+		light_on();
+		interval = gShutterCtx.ledOnTime;
+	}else{
+		light_off();
+		interval = gShutterCtx.ledOffTime;
+	}
+
+	return interval;
+}
+
+void light_blink_start(u8 times, u16 ledOnTime, u16 ledOffTime)
+{
+	u32 interval = 0;
+	gShutterCtx.times = times;
+
+	if(!gShutterCtx.timerLedEvt){
+		if(gShutterCtx.oriSta){
+			light_off();
+			gShutterCtx.sta = 0;
+			interval = ledOffTime;
 		}else{
-			led_off(LED_PERMIT);
+			light_on();
+			gShutterCtx.sta = 1;
+			interval = ledOnTime;
+		}
+		gShutterCtx.ledOnTime = ledOnTime;
+		gShutterCtx.ledOffTime = ledOffTime;
+
+		gShutterCtx.timerLedEvt = TL_ZB_TIMER_SCHEDULE(zclLightTimerCb, NULL, interval);
+	}
+}
+
+void light_blink_stop(void)
+{
+	if(gShutterCtx.timerLedEvt){
+		TL_ZB_TIMER_CANCEL(&gShutterCtx.timerLedEvt);
+
+		gShutterCtx.times = 0;
+		if(gShutterCtx.oriSta){
+			light_on();
+		}else{
+			light_off();
 		}
 	}
 }
@@ -88,6 +158,7 @@ void buttonKeepPressed(u8 btNum){
 
 void buttonShortPressed(u8 btNum){
 	if(btNum == VK_SW1){
+		printf("Button keep pressed SW1\n");
 		if(zb_isDeviceJoinedNwk()){
 			gShutterCtx.sta = !gShutterCtx.sta;
 			// if(gShutterCtx.sta){
@@ -97,11 +168,20 @@ void buttonShortPressed(u8 btNum){
 			// }
 		}
 	}else if(btNum == VK_SW2){
+		printf("Button keep pressed SW2\n");
 		/* toggle local permit Joining */
-		u8 duration = zb_getMacAssocPermit() ? 0 : 180;
-		zb_nlmePermitJoiningRequest(duration);
+		// u8 duration = zb_getMacAssocPermit() ? 0 : 180;
+		// zb_nlmePermitJoiningRequest(duration);
 
-		gpsCommissionModeInvork();
+		// gpsCommissionModeInvork();
+	}
+	else if(btNum == VK_SW3){
+		printf("Button keep pressed SW3\n");
+		/* toggle local permit Joining */
+		// u8 duration = zb_getMacAssocPermit() ? 0 : 180;
+		// zb_nlmePermitJoiningRequest(duration);
+
+		// gpsCommissionModeInvork();
 	}
 }
 

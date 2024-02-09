@@ -87,10 +87,18 @@ extern "C" {
 	#error please configurate uart PIN!!!!!!
 #endif
 
+// UART
+#if UART_ENABLE
+	#define UART_TX_PIN         	UART0_TX_PB2
+	#define UART_RX_PIN         	UART0_RX_PB3
+
+	#define UART_PIN_CFG()			uart_set_pin(UART_TX_PIN, UART_RX_PIN);// uart tx/rx pin set
+#endif
+
 
 // DEBUG
 #if UART_PRINTF_MODE
-	#define	DEBUG_INFO_TX_PIN	    GPIO_PB1			//print
+	#define	DEBUG_INFO_TX_PIN	    GPIO_PC7//print
 #endif
 
 

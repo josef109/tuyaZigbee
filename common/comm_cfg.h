@@ -47,7 +47,7 @@
  *
  * Normal mode is used by default.
  */
-#define BOOT_LOADER_MODE					1
+#define BOOT_LOADER_MODE					0
 
 
 
@@ -88,6 +88,9 @@
 #define IMAGE_TYPE_LIGHT_0504B              (0x14 | (IMAGE_TYPE_BOOT_FLAG << 7))
 #define IMAGE_TYPE_LIGHT_0505B              (0x15 | (IMAGE_TYPE_BOOT_FLAG << 7))
 
+#define IMAGE_TYPE_SHUTTER_LORA             (0x1a | (IMAGE_TYPE_BOOT_FLAG << 7))
+
+
 #define IMAGE_TYPE_SWITCH_0041              (0x21 | (IMAGE_TYPE_BOOT_FLAG << 7))
 
-#define IMAGE_TYPE_CONTACT_SENSOR_0601              (0x31 | (IMAGE_TYPE_BOOT_FLAG << 7))
+#define IMAGE_TYPE_CONTACT_SENSOR_0601      (0x31 | (IMAGE_TYPE_BOOT_FLAG << 7))

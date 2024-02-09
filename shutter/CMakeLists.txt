@@ -16,6 +16,7 @@ ADD_DEFINITIONS(
     -DMCU_STARTUP_${TELINK_PLATFORM}=1
     -D__PROJECT_TL_ROLLER_SHUTTER__=1
     -DROUTER=1
+    -DMCU_CORE_8258=1
     -DMIMIC_HEIMAN=${MIMIC_HEIMAN}
 )
 
@@ -60,7 +61,7 @@ SET(ZIGBEE_SRC
     ${SDK_PREFIX}/zigbee/zcl/light_color_control/zcl_light_colorCtrl_attr.c
     ${SDK_PREFIX}/zigbee/zcl/closures/zcl_door_lock.c
     ${SDK_PREFIX}/zigbee/zcl/closures/zcl_door_lock_attr.c
-    ${SDK_PREFIX}/zigbee/zcl/closures/zcl_window_covering.c
+#    ${SDK_PREFIX}/zigbee/zcl/closures/zcl_window_covering.c
     ${SDK_PREFIX}/zigbee/zcl/closures/zcl_window_covering_attr.c
     ${SDK_PREFIX}/zigbee/zcl/general/zcl_alarm.c
     ${SDK_PREFIX}/zigbee/zcl/general/zcl_alarm_attr.c
@@ -154,6 +155,8 @@ SET(ZIGBEE_SRC
     ${SDK_PREFIX}/proj/os/ev_timer.c
 
     ${SDK_PREFIX}/apps/common/main.c
+
+    ${PROJECT_SOURCE_DIR}/common/zcl_window_covering.c
 )
 
 

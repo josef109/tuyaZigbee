@@ -23,11 +23,10 @@
  *
  *******************************************************************************************************/
 
-// Fahrzeit auf       57s = 100%   0.1s = 0,175438596491%    = 44,9122807017 (1/256)    
+// Fahrzeit auf       57s = 100%   0.1s = 0,175438596491%    = 44,9122807017 (1/256)
 // Fahrzeit zu        57s
 // Wartezeit bei Richtungswechsel  1.5s
 // Verstellzeit Lamellen   1.6s
-
 
 #if (__PROJECT_TL_ROLLER_SHUTTER__)
 /**********************************************************************
@@ -39,20 +38,18 @@
 #include "tuyaShutter.h"
 #include "tuyaShutterCtrl.h"
 
-
 /**********************************************************************
  * LOCAL CONSTANTS
  */
-#define ZCL_LEVEL_CHANGE_INTERVAL		100
+#define ZCL_LEVEL_CHANGE_INTERVAL 100
 
-enum shutterState {
+enum shutterState
+{
 	IDLE,
-    OPEN_TILT,
-    CLOSE_TILT,
+	OPEN_TILT,
+	CLOSE_TILT,
 	UP,
 	DOWN,
-    BREAK_UP,
-	BREAK_DOWN,
 };
 
 /**********************************************************************
@@ -64,10 +61,13 @@ typedef struct
 	u16 currentLiftPerc256;
 	u16 destinationTiltPerc256;
 	u16 currentTiltPerc256;
-	u16 stepUpTiltPerc256;
-	u16 stepUpLiftPerc256;
-	u16 stepDownTiltPerc256;
-	u16 stepDownLiftPerc256;
+	s16 stepUpTiltPerc256;
+	s16 stepUpLiftPerc256;
+	s16 stepDownTiltPerc256;
+	s16 stepDownLiftPerc256;
+	u16 lockTimerUp;
+	u16 lockTimerDown;
+	u16 endTimer;
 	u16 remainingTime;
 	u8 state;
 } zcl_CoveringInfo_t;
@@ -80,6 +80,7 @@ static zcl_CoveringInfo_t coveringInfo = {
 	.currentLiftPerc256 = 0,
 	.destinationTiltPerc256 = 0,
 	.currentTiltPerc256 = 0,
+	.stepUpTiltPerc256 = 0,
 };
 
 static ev_timer_event_t *levelTimerEvt = NULL;
@@ -88,11 +89,15 @@ static ev_timer_event_t *levelTimerEvt = NULL;
  * FUNCTIONS
  */
 
-void pin_on(u32 pin){
+static void tuyaShutter_LevelTimerStop(void);
+
+void pin_on(u32 pin)
+{
 	drv_gpio_write(pin, 1);
 }
 
-void pin_off(u32 pin){
+void pin_off(u32 pin)
+{
 	drv_gpio_write(pin, 0);
 }
 
@@ -128,10 +133,112 @@ void tuyaShutter_coverInit(void)
 	zcl_WindowCoveringAttr_t *pLevel = zcl_WindowCoveringGet();
 
 	coveringInfo.currentLiftPerc256 = (u16)(pLevel->CurrentPositionLiftPercentage) << 8;
+	coveringInfo.currentTiltPerc256 = (u16)(pLevel->CurrentPositionTiltPercentage) << 8;
+	coveringInfo.destinationLiftPerc256 = coveringInfo.currentLiftPerc256;
+	coveringInfo.destinationTiltPerc256 = coveringInfo.currentTiltPerc256;
+
 	coveringInfo.state = IDLE;
+
+	coveringInfo.stepDownTiltPerc256 = (u16)(100 << 8) / g_zcl_WindowCoveringAttrs.TiltMoveTime; // 0 - 100     100% / 50
+	coveringInfo.stepUpTiltPerc256 = -(s16)((u16)(100 << 8) / g_zcl_WindowCoveringAttrs.TiltMoveTime);
+
+	coveringInfo.stepDownLiftPerc256 = (u16)(100 << 8) / g_zcl_WindowCoveringAttrs.LiftTimeDown; // 57s
+	coveringInfo.stepUpLiftPerc256 = -(s16)((u16)(100 << 8) / g_zcl_WindowCoveringAttrs.LiftTimeUp);
+
 	powerOff();
 }
 
+static inline bool checkmove(u16 cur, u16 des, s16 step)
+{
+	s16 dif = des - cur;
+	if (step > 0 && dif > 0)
+		return (dif >= step);
+	else if (step < 0 && dif < 0)
+		return (dif <= step);
+	return false;
+}
+
+s32 doIdle(void)
+{
+	powerOff();
+	if (coveringInfo.lockTimerDown > 0)
+		--coveringInfo.lockTimerDown;
+	else if (coveringInfo.lockTimerUp > 0)
+		--coveringInfo.lockTimerUp;
+	else 
+	{
+	    printf("doIdle lockTimerDown: %d lockTimerUp: %d\n", coveringInfo.lockTimerDown, coveringInfo.lockTimerUp);
+		levelTimerEvt = NULL;
+		return -1;
+	}
+	printf("doIdle lockTimerDown: %d lockTimerUp: %d\n", coveringInfo.lockTimerDown, coveringInfo.lockTimerUp);
+	return 0;
+	
+}
+
+void doOpenTilt(void)
+{
+	coveringInfo.currentTiltPerc256 += coveringInfo.stepUpTiltPerc256;
+	if (coveringInfo.currentTiltPerc256 < -coveringInfo.stepUpTiltPerc256)
+		coveringInfo.currentTiltPerc256 = 0;
+	moveUp();
+	printf("doOpenTilt currentTiltPerc256: %d \n", coveringInfo.currentTiltPerc256);
+}
+
+void doCloseTilt(void)
+{
+
+	coveringInfo.currentTiltPerc256 += coveringInfo.stepDownTiltPerc256;
+	if ((coveringInfo.currentTiltPerc256 + coveringInfo.stepDownTiltPerc256) > (100 << 8))
+		coveringInfo.currentTiltPerc256 = 100 << 8;
+	moveDown();
+	printf("doCloseTilt currentTiltPerc256: %d \n", coveringInfo.currentTiltPerc256);
+}
+
+void doUp(void)
+{
+	if (coveringInfo.currentLiftPerc256 > 0)
+	{
+		coveringInfo.currentLiftPerc256 += coveringInfo.stepUpLiftPerc256;
+		if (coveringInfo.currentLiftPerc256 < -coveringInfo.stepUpLiftPerc256)
+			coveringInfo.currentLiftPerc256 = 0;
+		if (coveringInfo.destinationLiftPerc256 == 0)
+		{
+			if (coveringInfo.destinationTiltPerc256 == 0)
+				coveringInfo.endTimer = 200;
+			else
+				coveringInfo.endTimer = 20;
+		}
+		else
+			coveringInfo.endTimer = 0;
+	}
+	else if(coveringInfo.endTimer > 0)
+		--coveringInfo.endTimer;
+	moveUp();
+	printf("doUp endtimer: %d currentLiftPerc256: %d\n", coveringInfo.endTimer, coveringInfo.currentLiftPerc256);
+}
+
+void doDown(void)
+{
+	if (coveringInfo.currentLiftPerc256 < (100 << 8))
+	{
+		coveringInfo.currentLiftPerc256 += coveringInfo.stepDownLiftPerc256;
+		if ((coveringInfo.currentLiftPerc256 + coveringInfo.stepDownLiftPerc256) >= (100 << 8))
+		{
+			coveringInfo.currentLiftPerc256 = 100 << 8;
+			if (coveringInfo.destinationTiltPerc256 >= (100 << 8))
+				coveringInfo.endTimer = 200;
+			else
+				coveringInfo.endTimer = 20;
+		}
+		else
+			coveringInfo.endTimer = 0;
+	}
+	else if(coveringInfo.endTimer > 0)
+		--coveringInfo.endTimer;
+	moveDown();
+	printf("doDown endtimer: %d currentLiftPerc256: %d\n", coveringInfo.endTimer, coveringInfo.currentLiftPerc256);
+}
 
 /*********************************************************************
  * @fn      tuyaShutter_levelTimerEvtCb
@@ -144,57 +251,119 @@ void tuyaShutter_coverInit(void)
  */
 static s32 tuyaShutter_levelTimerEvtCb(void *arg)
 {
-	zcl_WindowCoveringAttr_t *pLevel = zcl_WindowCoveringGet();
-
+	s32 ret = 0;
 	switch (coveringInfo.state)
 	{
 	case IDLE:
-		if (coveringInfo.currentLiftPerc256 > coveringInfo.destinationLiftPerc256)
+		if ((coveringInfo.lockTimerUp == 0) 
+		&& checkmove(coveringInfo.currentLiftPerc256, coveringInfo.destinationLiftPerc256, coveringInfo.stepUpLiftPerc256)) 
 		{
-			coveringInfo.state = UP;
-			moveUp();
-		}
-		else if (coveringInfo.currentLiftPerc256 < coveringInfo.destinationLiftPerc256)
-		{
-			coveringInfo.state = DOWN;
-			moveDown();
-		}
-		// lift up or down
-		break;
-	case OPEN_TILT:
-		break;
-	case CLOSE_TILT:
-		break;
-	case UP:
-		if (coveringInfo.currentTiltPerc256 >= (100 << 8))
-		{
-			if (coveringInfo.currentLiftPerc256 >= (100 << 8)){				powerOff();
-				coveringInfo.state = BREAK_DOWN;}
+			if(checkmove(coveringInfo.currentTiltPerc256, 0, coveringInfo.stepUpTiltPerc256))
+			{
+				coveringInfo.state = OPEN_TILT;
+				doOpenTilt();
+			}
 			else
-				coveringInfo.currentLiftPerc256 += coveringInfo.stepUpLiftPerc256;
+			{
+				coveringInfo.state = UP;
+				doUp();
+			}
+		}
+		else if ((coveringInfo.lockTimerUp == 0) 
+		&& checkmove(coveringInfo.currentTiltPerc256, coveringInfo.destinationTiltPerc256, coveringInfo.stepUpTiltPerc256))
+		{
+			coveringInfo.state = OPEN_TILT;
+			doOpenTilt();
+		}
+		else if ((coveringInfo.lockTimerDown == 0) 
+		&& checkmove(coveringInfo.currentLiftPerc256, coveringInfo.destinationLiftPerc256, coveringInfo.stepDownLiftPerc256)) 
+		{
+			if(checkmove(coveringInfo.currentTiltPerc256, 100 << 8, coveringInfo.stepDownTiltPerc256))
+			{
+				coveringInfo.state = CLOSE_TILT;
+				doCloseTilt();
+			}
+			else
+			{
+				coveringInfo.state = DOWN;
+				doDown();
+			}
+		}
+		else if ((coveringInfo.lockTimerDown == 0)
+		&& checkmove(coveringInfo.currentTiltPerc256, coveringInfo.destinationTiltPerc256, coveringInfo.stepDownTiltPerc256))
+		{
+			coveringInfo.state = CLOSE_TILT;
+			doCloseTilt();
 		}
 		else
+			ret = doIdle();
+		break;
+	case OPEN_TILT:
+		if ((coveringInfo.currentTiltPerc256 == 0) 
+		&& checkmove(coveringInfo.currentLiftPerc256, coveringInfo.destinationLiftPerc256, coveringInfo.stepUpLiftPerc256))
 		{
-			coveringInfo.currentTiltPerc256 += coveringInfo.stepUpTiltPerc256;
+			coveringInfo.state = UP;
+			doUp();
 		}
+		else if (checkmove(coveringInfo.currentLiftPerc256 , coveringInfo.destinationLiftPerc256, coveringInfo.stepDownLiftPerc256) 
+		|| (!checkmove(coveringInfo.currentLiftPerc256 , coveringInfo.destinationLiftPerc256, coveringInfo.stepUpLiftPerc256) 
+		&& !checkmove(coveringInfo.currentTiltPerc256 , coveringInfo.destinationTiltPerc256, coveringInfo.stepUpTiltPerc256)))
+		{
+			coveringInfo.state = IDLE;
+			coveringInfo.lockTimerDown = 20;
+			ret = doIdle();
+		}
+		else
+			doOpenTilt();
+		break;
+	case CLOSE_TILT:
+		if ((coveringInfo.currentTiltPerc256 == (100 << 8)) 
+		&& checkmove(coveringInfo.currentLiftPerc256, coveringInfo.destinationLiftPerc256, coveringInfo.stepDownLiftPerc256))
+		{
+			coveringInfo.state = DOWN;
+			doDown();
+		}
+		else if (checkmove(coveringInfo.currentLiftPerc256, coveringInfo.destinationLiftPerc256, coveringInfo.stepUpLiftPerc256)
+		|| (!checkmove(coveringInfo.currentLiftPerc256, coveringInfo.destinationLiftPerc256, coveringInfo.stepDownLiftPerc256)
+		&& !checkmove(coveringInfo.currentTiltPerc256, coveringInfo.destinationTiltPerc256, coveringInfo.stepDownTiltPerc256)))
+		{
+			coveringInfo.state = IDLE;
+			coveringInfo.lockTimerUp = 20;
+			ret = doIdle();
+		}
+		else
+			doCloseTilt();
+		break;
+	case UP:
+		if (checkmove(coveringInfo.currentLiftPerc256, coveringInfo.destinationLiftPerc256, coveringInfo.stepDownLiftPerc256)
+		|| (!checkmove(coveringInfo.currentLiftPerc256, coveringInfo.destinationLiftPerc256, coveringInfo.stepUpLiftPerc256) 
+		&& coveringInfo.endTimer == 0))
+		{
+			coveringInfo.state = IDLE;
+			coveringInfo.lockTimerDown = 20;
+			ret = doIdle();
+		}
+		else
+			doUp();
 		break;
 	case DOWN:
-		break;
-	case BREAK_UP:
-		break;
-	case BREAK_DOWN:
+		if (checkmove(coveringInfo.currentLiftPerc256, coveringInfo.destinationLiftPerc256, coveringInfo.stepUpLiftPerc256)
+		|| (!checkmove(coveringInfo.currentLiftPerc256, coveringInfo.destinationLiftPerc256, coveringInfo.stepDownLiftPerc256)
+		&& coveringInfo.endTimer == 0))
+		{
+			coveringInfo.state = IDLE;
+			coveringInfo.lockTimerUp = 20;
+			ret = doIdle();
+		}
+		else
+			doDown();
 		break;
 	}
 
-	if (coveringInfo.remainingTime)
-	{
-		return 0;
-	}
-	else
-	{
-		levelTimerEvt = NULL;
-		return -1;
-	}
+	zcl_WindowCoveringAttr_t *pLevel = zcl_WindowCoveringGet();
+	pLevel->CurrentPositionLiftPercentage = coveringInfo.currentLiftPerc256 >> 8;
+	pLevel->CurrentPositionTiltPercentage = coveringInfo.currentTiltPerc256 >> 8;
+	return ret;
 }
 
 /*********************************************************************
@@ -208,8 +377,10 @@ static s32 tuyaShutter_levelTimerEvtCb(void *arg)
  */
 static void tuyaShutter_LevelTimerStop(void)
 {
-	if(levelTimerEvt){
+	if (levelTimerEvt)
+	{
 		TL_ZB_TIMER_CANCEL(&levelTimerEvt);
+		levelTimerEvt = NULL;
 	}
 }
 
@@ -225,17 +396,99 @@ static void tuyaShutter_LevelTimerStop(void)
  */
 static void tuyaShutter_moveToLiftPercentageProcess(u8 cmdId, zcl_goToLiftPer_t *cmd)
 {
-	zcl_WindowCoveringAttr_t *pLevel = zcl_WindowCoveringGet();
+	coveringInfo.destinationLiftPerc256 = (u16)(cmd->perLiftValue) << 8;
+	if (levelTimerEvt == NULL)
+	{
+		levelTimerEvt = TL_ZB_TIMER_SCHEDULE(tuyaShutter_levelTimerEvtCb, NULL, ZCL_LEVEL_CHANGE_INTERVAL);
+	}
+	printf("Move Lift to %d\n", cmd->perLiftValue);
 
-	coveringInfo.currentLiftPerc256 = (u16)(pLevel->CurrentPositionLiftPercentage) << 8;
-	coveringInfo.currentTiltPerc256= (u16)(pLevel->CurrentPositionTiltPercentage) << 8;
-
-	//coveringInfo.stepLevel256 = ((s32)(cmd->level - pLevel->curLevel)) << 8;
-	//coveringInfo.stepLevel256 /= (s32)pLevel->remainingTime;
-
-
+	// else if (!levelTimerEvt->isRunning)
+	// {
+	// 	TL_ZB_TIMER_CANCEL(&levelTimerEvt);
+	// 	levelTimerEvt = TL_ZB_TIMER_SCHEDULE(tuyaShutter_levelTimerEvtCb, NULL, ZCL_LEVEL_CHANGE_INTERVAL);
+	// }
 }
 
+/*********************************************************************
+ * @fn      tuyaShutter_moveToTiltPercentageProcess
+ *
+ * @brief
+ *
+ * @param	cmdId
+ * @param	cmd
+ *
+ * @return	None
+ */
+static void tuyaShutter_moveToTiltPercentageProcess(u8 cmdId, zcl_goToTiltPer_t *cmd)
+{
+	//	zcl_WindowCoveringAttr_t *pLevel = zcl_WindowCoveringGet();
+
+	//	coveringInfo.currentLiftPerc256 = (u16)(pLevel->CurrentPositionLiftPercentage) << 8;
+	//	coveringInfo.currentTiltPerc256 = (u16)(pLevel->CurrentPositionTiltPercentage) << 8;
+
+	coveringInfo.destinationTiltPerc256 = (u16)(cmd->perTiltValue) << 8;
+	// coveringInfo.stepLevel256 = ((s32)(cmd->level - pLevel->curLevel)) << 8;
+	// coveringInfo.stepLevel256 /= (s32)pLevel->remainingTime;
+	if (levelTimerEvt == NULL)
+	{
+		levelTimerEvt = TL_ZB_TIMER_SCHEDULE(tuyaShutter_levelTimerEvtCb, NULL, ZCL_LEVEL_CHANGE_INTERVAL);
+	}
+	printf("Move Tilt to %d\n", cmd->perTiltValue);
+	// else if (!levelTimerEvt->isRunning)
+	// {
+	// 	TL_ZB_TIMER_CANCEL(&levelTimerEvt);
+	// 	levelTimerEvt = TL_ZB_TIMER_SCHEDULE(tuyaShutter_levelTimerEvtCb, NULL, ZCL_LEVEL_CHANGE_INTERVAL);
+	// }
+}
+
+static void tuyaShutter_openProcess(void)
+{
+	coveringInfo.destinationTiltPerc256 = 0;
+	coveringInfo.destinationLiftPerc256 = 0;
+	if (levelTimerEvt == NULL)
+	{
+		levelTimerEvt = TL_ZB_TIMER_SCHEDULE(tuyaShutter_levelTimerEvtCb, NULL, ZCL_LEVEL_CHANGE_INTERVAL);
+	}
+	printf("Open\n");
+	// else if (!levelTimerEvt->isRunning)
+	// {
+	// 	TL_ZB_TIMER_CANCEL(&levelTimerEvt);
+	// 	levelTimerEvt = TL_ZB_TIMER_SCHEDULE(tuyaShutter_levelTimerEvtCb, NULL, ZCL_LEVEL_CHANGE_INTERVAL);
+	// }
+}
+
+static void tuyaShutter_closeProcess(void)
+{
+	coveringInfo.destinationTiltPerc256 = 100 << 8;
+	coveringInfo.destinationLiftPerc256 = 100 << 8;
+	if (levelTimerEvt == NULL)
+	{
+		levelTimerEvt = TL_ZB_TIMER_SCHEDULE(tuyaShutter_levelTimerEvtCb, NULL, ZCL_LEVEL_CHANGE_INTERVAL);
+	}
+	printf("close\n");
+	// else if (!levelTimerEvt->isRunning)
+	// {
+	// 	TL_ZB_TIMER_CANCEL(&levelTimerEvt);
+	// 	levelTimerEvt = TL_ZB_TIMER_SCHEDULE(tuyaShutter_levelTimerEvtCb, NULL, ZCL_LEVEL_CHANGE_INTERVAL);
+	// }
+}
+
+static void tuyaShutter_stopProcess(void)
+{
+	coveringInfo.destinationTiltPerc256 = coveringInfo.currentTiltPerc256;
+	coveringInfo.destinationLiftPerc256 = coveringInfo.currentLiftPerc256;
+	if (levelTimerEvt == NULL)
+	{
+		levelTimerEvt = TL_ZB_TIMER_SCHEDULE(tuyaShutter_levelTimerEvtCb, NULL, ZCL_LEVEL_CHANGE_INTERVAL);
+	}
+	printf("stop\n");
+	// else if (!levelTimerEvt->isRunning)
+	// {
+	// 	TL_ZB_TIMER_CANCEL(&levelTimerEvt);
+	// 	levelTimerEvt = TL_ZB_TIMER_SCHEDULE(tuyaShutter_levelTimerEvtCb, NULL, ZCL_LEVEL_CHANGE_INTERVAL);
+	// }
+}
 
 /*********************************************************************
  * @fn      tuyaShutter_windowCoveringCb
@@ -250,38 +503,39 @@ static void tuyaShutter_moveToLiftPercentageProcess(u8 cmdId, zcl_goToLiftPer_t 
  */
 status_t tuyaShutter_windowCoveringCb(zclIncomingAddrInfo_t *pAddrInfo, u8 cmdId, void *cmdPayload)
 {
-	if(pAddrInfo->dstEp == TUYA_SHUTTER_ENDPOINT){
-		switch(cmdId){
-			case ZCL_CMD_UP_OPEN:
-				//tuyaShutter_moveToLiftPercentageProcess(cmdId, (moveToLvl_t *)cmdPayload);
-				break;
-			case ZCL_CMD_DOWN_CLOSE:
-				//tuyaShutter_moveProcess(cmdId, (move_t *)cmdPayload);
-				break;
-			case ZCL_CMD_STOP:
-				//tuyaShutter_stopProcess(cmdId, (step_t *)cmdPayload);
-				break;
-			case ZCL_CMD_GO_TO_LIFT_VALUE:
-				//tuyaShutter_moveToLiftPercentageProcess(cmdId, (moveToLvl_t *)cmdPayload);
-				break;
-			case ZCL_CMD_GO_TO_LIFT_PERCENTAGE:
-				tuyaShutter_moveToLiftPercentageProcess(cmdId, (zcl_goToLiftPer_t *)cmdPayload);
-
-				break;
-			case ZCL_CMD_GO_TO_TILT_VALUE:
-				
-				break;
-			case ZCL_CMD_GO_TO_TILT_PERCENTAGE:
-				
-				break;
-			default:
-				break;
+	u8 status = ZCL_STA_FAILURE;
+	if (pAddrInfo->dstEp == TUYA_SHUTTER_ENDPOINT)
+	{
+		status = ZCL_STA_SUCCESS;
+		switch (cmdId)
+		{
+		case ZCL_CMD_UP_OPEN:
+			tuyaShutter_openProcess();
+			break;
+		case ZCL_CMD_DOWN_CLOSE:
+			tuyaShutter_closeProcess();
+			break;
+		case ZCL_CMD_STOP:
+			tuyaShutter_stopProcess();
+			break;
+		case ZCL_CMD_GO_TO_LIFT_VALUE:
+			// tuyaShutter_moveToLiftValue(cmdId, (zcl_goToLiftPer_t *)cmdPayload);
+			break;
+		case ZCL_CMD_GO_TO_LIFT_PERCENTAGE:
+			tuyaShutter_moveToLiftPercentageProcess(cmdId, (zcl_goToLiftPer_t *)cmdPayload);
+			break;
+		case ZCL_CMD_GO_TO_TILT_VALUE:
+			break;
+		case ZCL_CMD_GO_TO_TILT_PERCENTAGE:
+			tuyaShutter_moveToTiltPercentageProcess(cmdId, (zcl_goToTiltPer_t *)cmdPayload);
+			break;
+		default:
+			status = ZCL_STA_UNSUP_CLUSTER_COMMAND;
+			break;
 		}
 	}
 
-	return ZCL_STA_SUCCESS;
+	return status;
 }
 
-
-
-#endif  /* __PROJECT_TL_ROLLER_SHUTTER__ */
+#endif /* __PROJECT_TL_ROLLER_SHUTTER__ */

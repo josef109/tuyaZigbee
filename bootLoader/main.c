@@ -1,7 +1,7 @@
 /********************************************************************************************************
- * @file    app_ui.h
+ * @file    main.c
  *
- * @brief   This is the header file for app_ui
+ * @brief   This is the source file for main
  *
  * @author  Zigbee Group
  * @date    2021
@@ -23,34 +23,40 @@
  *
  *******************************************************************************************************/
 
-#ifndef _APP_UI_H_
-#define _APP_UI_H_
+#include "tl_common.h"
+#include "bootloader.h"
 
-/**********************************************************************
- * CONSTANT
- */
-#define LED_ON 0
-#define LED_OFF 1
 
-/**********************************************************************
- * TYPEDEFS
- */
-enum
-{
-	APP_STATE_NORMAL,
-	APP_FACTORY_NEW_SET_CHECK,
-	APP_FACTORY_NEW_DOING,
-};
+int main(void){
+	startup_state_e state = drv_platform_init();
 
-/**********************************************************************
- * FUNCTIONS
- */
-void led_init(void);
-void led_on(u32 pin);
-void led_off(u32 pin);
-void localPermitJoinState(void);
-void app_key_handler(void);
-void light_blink_start(u8, u16, u16);
-void light_blink_stop(void);
+	u8 isRetention = (state == SYSTEM_DEEP_RETENTION) ? 1 : 0;
+	u8 isBoot = (state == SYSTEM_BOOT) ? 1 : 0;
 
-#endif /* _APP_UI_H_ */
+	if(!isRetention){
+		ev_buf_init();
+		ev_timer_init();
+	}
+
+	bootloader_init(isBoot);
+
+#if VOLTAGE_DETECT_ENABLE
+    u32 tick = clock_time();
+#endif
+
+	while(1){
+#if VOLTAGE_DETECT_ENABLE
+		if(clock_time_exceed(tick, 200 * 1000)){
+			voltage_detect(0);
+			tick = clock_time();
+		}
+#endif
+
+		ev_main();
+
+		bootloader_loop();
+	}
+
+	return 0;
+}
+

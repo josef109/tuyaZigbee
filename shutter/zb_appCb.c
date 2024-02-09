@@ -35,6 +35,7 @@
 #include "ota.h"
 #include "tuyaShutter.h"
 #include "tuyaShutterCtrl.h"
+#include "app_ui.h"
 
 /**********************************************************************
  * LOCAL CONSTANTS
@@ -117,7 +118,7 @@ s32 tuyaShutter_bdbFindAndBindStart(void *arg){
  * @return  None
  */
 void zbdemo_bdbInitCb(u8 status, u8 joinedNetwork){
-//	printf("bdbInitCb: sta = %x, joined = %x\n", status, joinedNetwork);
+	printf("bdbInitCb: sta = %x, joined = %x\n", status, joinedNetwork);
 
 	if(status == BDB_INIT_STATUS_SUCCESS){
 		/*
@@ -127,7 +128,7 @@ void zbdemo_bdbInitCb(u8 status, u8 joinedNetwork){
 			heartInterval = 1000;
 
 #ifdef ZCL_OTA
-			ota_queryStart(MY_OTA_PERIODIC_QUERY_INTERVAL);
+			ota_queryStart(MY_OTA_PERIODIC_QUERY_INTERVAL);  
 #endif
 		}else{
 			heartInterval = 500;
@@ -170,7 +171,7 @@ void zbdemo_bdbCommissioningCb(u8 status, void *arg){
 		case BDB_COMMISSION_STA_SUCCESS:
 			heartInterval = 1000;
 
-			//light_blink_start(2, 200, 200);
+			light_blink_start(2, 200, 200);
 
 #ifdef ZCL_OTA
 	    	ota_queryStart(OTA_PERIODIC_QUERY_INTERVAL);
@@ -178,7 +179,7 @@ void zbdemo_bdbCommissioningCb(u8 status, void *arg){
 
 #if FIND_AND_BIND_SUPPORT
 			if(!gShutterCtx.bdbFindBindFlg){
-				gShutterCtx.bdbFindBindFlg = TRUE;
+				gShutterCtx.bdbFindBindFlg = TRUE;  
 				TL_ZB_TIMER_SCHEDULE(tuyaShutter_bdbFindAndBindStart, NULL, 1000);
 			}
 #endif
@@ -268,7 +269,7 @@ s32 tuyaShutter_softReset(void *arg){
 void tuyaShutter_leaveCnfHandler(nlme_leave_cnf_t *pLeaveCnf)
 {
     if(pLeaveCnf->status == SUCCESS){
-    	//light_blink_start(3, 200, 200);
+    	light_blink_start(3, 200, 200);
 
     	//waiting blink over
     	TL_ZB_TIMER_SCHEDULE(tuyaShutter_softReset, NULL, 2 * 1000);

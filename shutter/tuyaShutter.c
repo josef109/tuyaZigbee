@@ -313,6 +313,8 @@ void user_init(bool isRetention)
 
     /* Initialize BDB */
 	bdb_init((af_simple_descriptor_t *)&tuyaShutter_simpleDesc, &g_bdbCommissionSetting, &g_zbDemoBdbCb, 1);
+
+	tuyaShutter_coverInit();
 }
 
 #endif  /* __PROJECT_TL_ROLLER_SHUTTER__ */

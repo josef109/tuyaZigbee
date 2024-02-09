@@ -72,7 +72,11 @@ typedef struct{
 	ev_timer_event_t *timerLedEvt;
 	u32 keyPressedTime;
 
+	u16 ledOnTime;
+	u16 ledOffTime;
+	u8 	oriSta;		//original state before blink
 	u8 	sta;		//current state in blink
+	u8 	times;		//blink times
 	u8  state;
 
 	bool bdbFindBindFlg;
@@ -211,6 +215,8 @@ void tuyaShutter_onoff(u8 cmd);
 void zcl_tuyaShutterAttrsInit(void);
 //nv_sts_t zcl_PositionTiltPercentageAttr_save(void);
 nv_sts_t zcl_WindowCoveringAttr_save(void);
+
+void tuyaShutter_coverInit(void);
 
 #if AF_TEST_ENABLE
 void afTest_rx_handler(void *arg);
