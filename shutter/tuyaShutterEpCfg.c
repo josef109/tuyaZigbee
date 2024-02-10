@@ -287,15 +287,15 @@ zcl_WindowCoveringAttr_t g_zcl_WindowCoveringAttrs =
 
 const zclAttrInfo_t window_covering_attrTbl[] =
 	{
-		{ZCL_ATTRID_WINDOW_COVERING_TYPE, ZCL_DATA_TYPE_UINT8, ACCESS_CONTROL_READ, (u8 *)&g_zcl_WindowCoveringAttrs.WindowCoveringType},
-		{ZCL_ATTRID_CONFIG_STATUS, ZCL_DATA_TYPE_UINT8, ACCESS_CONTROL_READ, (u8 *)&g_zcl_WindowCoveringAttrs.ConfigStatus},
+		{ZCL_ATTRID_WINDOW_COVERING_TYPE, ZCL_DATA_TYPE_ENUM8, ACCESS_CONTROL_READ, (u8 *)&g_zcl_WindowCoveringAttrs.WindowCoveringType},
+		{ZCL_ATTRID_CONFIG_STATUS, ZCL_DATA_TYPE_BITMAP8, ACCESS_CONTROL_READ, (u8 *)&g_zcl_WindowCoveringAttrs.ConfigStatus},
 		{ZCL_ATTRID_CURRENT_POSITION_LIFT_PERCENTAGE, ZCL_DATA_TYPE_UINT8, ACCESS_CONTROL_READ | ACCESS_CONTROL_REPORTABLE, (u8 *)&g_zcl_WindowCoveringAttrs.CurrentPositionLiftPercentage},
 		{ZCL_ATTRID_CURRENT_POSITION_TILT_PERCENTAGE, ZCL_DATA_TYPE_UINT8, ACCESS_CONTROL_READ | ACCESS_CONTROL_REPORTABLE, (u8 *)&g_zcl_WindowCoveringAttrs.CurrentPositionTiltPercentage},
 		{ZCL_ATTRID_INSTALLED_OPEN_LIMIT_LIFT, ZCL_DATA_TYPE_UINT16, ACCESS_CONTROL_READ, (u8 *)&g_zcl_WindowCoveringAttrs.InstalledOpenLimitLift},
 		{ZCL_ATTRID_INSTALLED_CLOSED_LIMIT_LIFT, ZCL_DATA_TYPE_UINT16, ACCESS_CONTROL_READ, (u8 *)&g_zcl_WindowCoveringAttrs.InstalledClosedLimitLift},
 		{ZCL_ATTRID_INSTALLED_OPEN_LIMIT_TILT, ZCL_DATA_TYPE_UINT16, ACCESS_CONTROL_READ, (u8 *)&g_zcl_WindowCoveringAttrs.InstalledOpenLimitTilt},
 		{ZCL_ATTRID_INSTALLED_CLOSED_LIMIT_TILT, ZCL_DATA_TYPE_UINT16, ACCESS_CONTROL_READ, (u8 *)&g_zcl_WindowCoveringAttrs.InstalledClosedLimitTilt},
-		{ZCL_ATTRID_MODE, ZCL_DATA_TYPE_UINT8, ACCESS_CONTROL_READ | ACCESS_CONTROL_WRITE, (u8 *)&g_zcl_WindowCoveringAttrs.Mode},
+		{ZCL_ATTRID_MODE, ZCL_DATA_TYPE_BITMAP8, ACCESS_CONTROL_READ | ACCESS_CONTROL_WRITE, (u8 *)&g_zcl_WindowCoveringAttrs.Mode},
 		{ZCL_ATTRID_GLOBAL_CLUSTER_REVISION, ZCL_DATA_TYPE_UINT16, ACCESS_CONTROL_READ, (u8 *)&zcl_attr_global_clusterRevision},
 };
 

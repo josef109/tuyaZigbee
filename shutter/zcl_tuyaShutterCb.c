@@ -48,6 +48,7 @@
  * LOCAL FUNCTIONS
  */
 #ifdef ZCL_READ
+static void tuyaShutter_zclReadCmd(zclReadCmd_t *pReadCmd);
 static void tuyaShutter_zclReadRspCmd(zclReadRspCmd_t *pReadRspCmd);
 #endif
 #ifdef ZCL_WRITE
@@ -87,11 +88,22 @@ static ev_timer_event_t *identifyTimerEvt = NULL;
  */
 void tuyaShutter_zclProcessIncomingMsg(zclIncoming_t *pInHdlrMsg)
 {
+	u8 status = ZCL_STA_SUCCESS;
+
 	printf("tuyaShutter_zclProcessIncomingMsg %d\n", pInHdlrMsg->hdr.cmd);
 
 	switch (pInHdlrMsg->hdr.cmd)
 	{
 #ifdef ZCL_READ
+	case ZCL_CMD_READ:
+//		status = zcl_readHandler(pInHdlrMsg);
+		tuyaShutter_zclReadCmd(pInHdlrMsg->attrCmd);
+		break;
+	// case ZCL_CMD_READ_RSP:
+	// 	status = zcl_readRspHandler(pCmd);
+	// 	break;
+
+
 	case ZCL_CMD_READ_RSP:
 		tuyaShutter_zclReadRspCmd(pInHdlrMsg->attrCmd);
 		break;
@@ -121,9 +133,25 @@ void tuyaShutter_zclProcessIncomingMsg(zclIncoming_t *pInHdlrMsg)
 	default:
 		break;
 	}
+//	return status;
 }
 
 #ifdef ZCL_READ
+/*********************************************************************
+ * @fn      tuyaShutter_zclReadCmd
+ *
+ * @brief   Handler for ZCL Read Response command.
+ *
+ * @param   pInHdlrMsg - incoming message to process
+ *
+ * @return  None
+ */
+static void tuyaShutter_zclReadCmd(zclReadCmd_t *pReadCmd)
+{
+	printf("tuyaShutter_zclReadCmd\n");
+
+}
+
 /*********************************************************************
  * @fn      tuyaShutter_zclReadRspCmd
  *
@@ -151,29 +179,30 @@ static void tuyaShutter_zclReadRspCmd(zclReadRspCmd_t *pReadRspCmd)
  */
 static void tuyaShutter_zclWriteReqCmd(u16 clusterId, zclWriteCmd_t *pWriteReqCmd)
 {
-	u8 numAttr = pWriteReqCmd->numAttr;
-	zclWriteRec_t *attr = pWriteReqCmd->attrList;
+	printf("tuyaShutter_zclWriteReqCmd\n");
+	// u8 numAttr = pWriteReqCmd->numAttr;
+	// zclWriteRec_t *attr = pWriteReqCmd->attrList;
 
-	if (clusterId == ZCL_CLUSTER_CLOSURES_WINDOW_COVERING)
-	{
-		for (u8 i = 0; i < numAttr; i++)
-		{
-			if (attr[i].attrID == ZCL_ATTRID_START_UP_ONOFF)
-			{ //???????????
-				zcl_WindowCoveringAttr_save();
-			}
-		}
-		for (u8 i = 0; i < numAttr; i++)
-		{
-			printf("WriteReq: %d %d %d\n", i, attr[i].attrID, *(attr[i].attrData));
-			switch (attr[i].attrID)
-			{
-			case ZCL_ATTRID_MODE:
-				g_zcl_WindowCoveringAttrs.Mode = *(attr[i].attrData);
-				break;
-			}
-		}
-	}
+	// if (clusterId == ZCL_CLUSTER_CLOSURES_WINDOW_COVERING)
+	// {
+	// 	for (u8 i = 0; i < numAttr; i++)
+	// 	{
+	// 		if (attr[i].attrID == ZCL_ATTRID_START_UP_ONOFF)
+	// 		{ //???????????
+	// 			zcl_WindowCoveringAttr_save();
+	// 		}
+	// 	}
+	// 	for (u8 i = 0; i < numAttr; i++)
+	// 	{
+	// 		printf("WriteReq: %d %d %d\n", i, attr[i].attrID, *(attr[i].attrData));
+	// 		switch (attr[i].attrID)
+	// 		{
+	// 		case ZCL_ATTRID_MODE:
+	// 			g_zcl_WindowCoveringAttrs.Mode = *(attr[i].attrData);
+	// 			break;
+	// 		}
+	// 	}
+	// }
 }
 
 /*********************************************************************

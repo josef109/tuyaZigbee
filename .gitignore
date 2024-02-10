@@ -4,6 +4,8 @@ build/*
 #cache dir
 .cache/*
 
+.vscode/*
+
 # Prerequisites
 *.d
 
