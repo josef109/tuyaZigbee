@@ -254,11 +254,11 @@ zcl_WindowCoveringAttr_t g_zcl_WindowCoveringAttrs =
 		.Mode = 0x14,
 		.IntermediateSetpointsLift = {1, 0, 0}, // “1,0x0000”
 		.IntermediateSetpointsTilt = {1, 0, 0}, // “1,0x0000”
-		.LiftTimeUp = 570,
-		.LiftTimeDown = 570,
-		.ReverseWaitTime = 15,
-		.TiltMoveTime = 16,
-		.ReverseFlags = 0,
+		// .LiftTimeUp = 570,
+		// .LiftTimeDown = 570,
+		// .ReverseWaitTime = 15,
+		// .TiltMoveTime = 16,
+		// .ReverseFlags = 0,
 };
 
 // /**********************************************************************
@@ -285,8 +285,13 @@ zcl_WindowCoveringAttr_t g_zcl_WindowCoveringAttrs =
 
 // #endif    /* ZCL_IAS_ZONE */
 // #endif
-static zcl_nv_WindowCovering_t zcl_nv_WindowCovering;
-
+zcl_nv_WindowCovering_t g_zcl_nv_WindowCovering = {
+	.LiftTimeUp = 570,
+	.LiftTimeDown = 570,
+	.ReverseWaitTime = 15,
+	.TiltMoveTime = 16,
+	.ReverseFlags = 0,
+};
 
 const zclAttrInfo_t window_covering_attrTbl[] =
 	{
@@ -300,11 +305,11 @@ const zclAttrInfo_t window_covering_attrTbl[] =
 		{ZCL_ATTRID_INSTALLED_CLOSED_LIMIT_TILT, ZCL_DATA_TYPE_UINT16, ACCESS_CONTROL_READ, (u8 *)&g_zcl_WindowCoveringAttrs.InstalledClosedLimitTilt},
 		{ZCL_ATTRID_MODE, ZCL_DATA_TYPE_BITMAP8, ACCESS_CONTROL_READ | ACCESS_CONTROL_WRITE, (u8 *)&g_zcl_WindowCoveringAttrs.Mode},
 
-		// {0x20, ZCL_DATA_TYPE_UINT16, ACCESS_CONTROL_READ | ACCESS_CONTROL_WRITE, (u8 *)&zcl_nv_WindowCovering.LiftTimeUp},
-		// {0x21, ZCL_DATA_TYPE_UINT16, ACCESS_CONTROL_READ | ACCESS_CONTROL_WRITE, (u8 *)&zcl_nv_WindowCovering.LiftTimeDown},
-		// {0x22, ZCL_DATA_TYPE_UINT8, ACCESS_CONTROL_READ | ACCESS_CONTROL_WRITE, (u8 *)&zcl_nv_WindowCovering.ReverseWaitTime},
-		// {0x23, ZCL_DATA_TYPE_UINT8, ACCESS_CONTROL_READ | ACCESS_CONTROL_WRITE, (u8 *)&zcl_nv_WindowCovering.TiltMoveTime},
-		// {0x24, ZCL_DATA_TYPE_UINT8, ACCESS_CONTROL_READ | ACCESS_CONTROL_WRITE, (u8 *)&zcl_nv_WindowCovering.ReverseFlags},
+		{0x200, ZCL_DATA_TYPE_UINT16, ACCESS_CONTROL_READ | ACCESS_CONTROL_WRITE, (u8 *)&g_zcl_nv_WindowCovering.LiftTimeUp},
+		{0x201, ZCL_DATA_TYPE_UINT16, ACCESS_CONTROL_READ | ACCESS_CONTROL_WRITE, (u8 *)&g_zcl_nv_WindowCovering.LiftTimeDown},
+		{0x202, ZCL_DATA_TYPE_UINT8, ACCESS_CONTROL_READ | ACCESS_CONTROL_WRITE, (u8 *)&g_zcl_nv_WindowCovering.ReverseWaitTime},
+		{0x203, ZCL_DATA_TYPE_UINT8, ACCESS_CONTROL_READ | ACCESS_CONTROL_WRITE, (u8 *)&g_zcl_nv_WindowCovering.TiltMoveTime},
+		{0x204, ZCL_DATA_TYPE_UINT8, ACCESS_CONTROL_READ | ACCESS_CONTROL_WRITE, (u8 *)&g_zcl_nv_WindowCovering.ReverseFlags},
 
 		{ZCL_ATTRID_GLOBAL_CLUSTER_REVISION, ZCL_DATA_TYPE_UINT16, ACCESS_CONTROL_READ, (u8 *)&zcl_attr_global_clusterRevision},
 
@@ -312,44 +317,44 @@ const zclAttrInfo_t window_covering_attrTbl[] =
 
 #define ZCL_WINDOW_COVERING_ATTR_NUM sizeof(window_covering_attrTbl) / sizeof(zclAttrInfo_t)
 
-_CODE_ZCL_ static status_t zcl_custom_clientCmdHandler(zclIncoming_t *pInMsg)
-{
-		u8 status = ZCL_STA_SUCCESS;
-		return status;
-}
+// _CODE_ZCL_ static status_t zcl_custom_clientCmdHandler(zclIncoming_t *pInMsg)
+// {
+// 		u8 status = ZCL_STA_SUCCESS;
+// 		return status;
+// }
 
-_CODE_ZCL_ static status_t zcl_custom_cmdHandler(zclIncoming_t *pInMsg)
-{
-	if(pInMsg->hdr.frmCtrl.bf.dir == ZCL_FRAME_CLIENT_SERVER_DIR){
-		return zcl_custom_clientCmdHandler(pInMsg);
-	}else{
-		return ZCL_STA_UNSUP_CLUSTER_COMMAND;
-	}
-}
+// _CODE_ZCL_ static status_t zcl_custom_cmdHandler(zclIncoming_t *pInMsg)
+// {
+// 	if(pInMsg->hdr.frmCtrl.bf.dir == ZCL_FRAME_CLIENT_SERVER_DIR){
+// 		return zcl_custom_clientCmdHandler(pInMsg);
+// 	}else{
+// 		return ZCL_STA_UNSUP_CLUSTER_COMMAND;
+// 	}
+// }
 
-_CODE_ZCL_ status_t zcl_custom_register(u8 endpoint, u16 manuCode, u8 attrNum, const zclAttrInfo_t attrTbl[], cluster_forAppCb_t cb)
-{
-	return zcl_registerCluster(endpoint, ZCL_CLUSTER_TELINK_SDK_TEST, manuCode, attrNum, attrTbl, zcl_custom_cmdHandler, cb);
-}
+// _CODE_ZCL_ status_t zcl_custom_register(u8 endpoint, u16 manuCode, u8 attrNum, const zclAttrInfo_t attrTbl[], cluster_forAppCb_t cb)
+// {
+// 	return zcl_registerCluster(endpoint, ZCL_CLUSTER_TELINK_SDK_TEST, manuCode, attrNum, attrTbl, zcl_custom_cmdHandler, cb);
+// }
 
-status_t tuyaShutter_customCb(zclIncomingAddrInfo_t *pAddrInfo, u8 cmdId, void *cmdPayload)
-{
-	u8 status = ZCL_STA_FAILURE;
+// status_t tuyaShutter_customCb(zclIncomingAddrInfo_t *pAddrInfo, u8 cmdId, void *cmdPayload)
+// {
+// 	u8 status = ZCL_STA_FAILURE;
 
-	return status;
-}
+// 	return status;
+// }
 
 
-const zclAttrInfo_t custom_attrTbl[] =
-	{
-		{0, ZCL_DATA_TYPE_UINT16, ACCESS_CONTROL_READ | ACCESS_CONTROL_WRITE, (u8 *)&zcl_nv_WindowCovering.LiftTimeUp},
-		{1, ZCL_DATA_TYPE_UINT16, ACCESS_CONTROL_READ | ACCESS_CONTROL_WRITE, (u8 *)&zcl_nv_WindowCovering.LiftTimeDown},
-		{2, ZCL_DATA_TYPE_UINT8, ACCESS_CONTROL_READ | ACCESS_CONTROL_WRITE, (u8 *)&zcl_nv_WindowCovering.ReverseWaitTime},
-		{3, ZCL_DATA_TYPE_UINT8, ACCESS_CONTROL_READ | ACCESS_CONTROL_WRITE, (u8 *)&zcl_nv_WindowCovering.TiltMoveTime},
-		{4, ZCL_DATA_TYPE_UINT8, ACCESS_CONTROL_READ | ACCESS_CONTROL_WRITE, (u8 *)&zcl_nv_WindowCovering.ReverseFlags},
-};
+// const zclAttrInfo_t custom_attrTbl[] =
+// 	{
+// 		{0, ZCL_DATA_TYPE_UINT16, ACCESS_CONTROL_READ | ACCESS_CONTROL_WRITE, (u8 *)&g_zcl_nv_WindowCovering.LiftTimeUp},
+// 		{1, ZCL_DATA_TYPE_UINT16, ACCESS_CONTROL_READ | ACCESS_CONTROL_WRITE, (u8 *)&g_zcl_nv_WindowCovering.LiftTimeDown},
+// 		{2, ZCL_DATA_TYPE_UINT8, ACCESS_CONTROL_READ | ACCESS_CONTROL_WRITE, (u8 *)&g_zcl_nv_WindowCovering.ReverseWaitTime},
+// 		{3, ZCL_DATA_TYPE_UINT8, ACCESS_CONTROL_READ | ACCESS_CONTROL_WRITE, (u8 *)&g_zcl_nv_WindowCovering.TiltMoveTime},
+// 		{4, ZCL_DATA_TYPE_UINT8, ACCESS_CONTROL_READ | ACCESS_CONTROL_WRITE, (u8 *)&g_zcl_nv_WindowCovering.ReverseFlags},
+// };
 
-#define ZCL_CUSTOM_ATTR_NUM sizeof(custom_attrTbl) / sizeof(zclAttrInfo_t)
+// #define ZCL_CUSTOM_ATTR_NUM sizeof(custom_attrTbl) / sizeof(zclAttrInfo_t)
 
 
 /**
@@ -373,93 +378,6 @@ const zcl_specClusterInfo_t g_tuyaShutterClusterList[] =
 u8 TUYASHUTTER_CB_CLUSTER_NUM = (sizeof(g_tuyaShutterClusterList) / sizeof(g_tuyaShutterClusterList[0]));
 
 
-/**********************************************************************
- * FUNCTIONS
- */
-
-/*********************************************************************
- * @fn      zcl_WindowCoveringAttr_save
- *
- * @brief
- *
- * @param   None
- *
- * @return
- */
-nv_sts_t zcl_WindowCoveringAttr_save(void)
-{
-	nv_sts_t st = NV_SUCC;
-
-#if NV_ENABLE
-	zcl_nv_WindowCovering_t zcl_nv_WindowCovering;
-
-	st = nv_flashReadNew(1, NV_MODULE_ZCL, NV_ITEM_ZCL_WINDOWCOVERING, sizeof(zcl_nv_WindowCovering_t), (u8 *)&zcl_nv_WindowCovering);
-
-	if ((st == NV_ITEM_NOT_FOUND) ||
-		((st == NV_SUCC) && ((zcl_nv_WindowCovering.LiftTimeDown != g_zcl_WindowCoveringAttrs.LiftTimeDown) ||
-							 (zcl_nv_WindowCovering.LiftTimeUp != g_zcl_WindowCoveringAttrs.LiftTimeUp) ||
-							 (zcl_nv_WindowCovering.ReverseWaitTime != g_zcl_WindowCoveringAttrs.ReverseWaitTime) ||
-							 (zcl_nv_WindowCovering.TiltMoveTime != g_zcl_WindowCoveringAttrs.TiltMoveTime) ||
-							 (zcl_nv_WindowCovering.ReverseFlags != g_zcl_WindowCoveringAttrs.ReverseFlags))))
-	{
-		zcl_nv_WindowCovering.LiftTimeDown = g_zcl_WindowCoveringAttrs.LiftTimeDown;
-		zcl_nv_WindowCovering.LiftTimeUp = g_zcl_WindowCoveringAttrs.LiftTimeUp;
-		zcl_nv_WindowCovering.ReverseWaitTime = g_zcl_WindowCoveringAttrs.ReverseWaitTime;
-		zcl_nv_WindowCovering.TiltMoveTime = g_zcl_WindowCoveringAttrs.TiltMoveTime;
-		zcl_nv_WindowCovering.ReverseFlags = g_zcl_WindowCoveringAttrs.ReverseFlags;
-
-		st = nv_flashWriteNew(1, NV_MODULE_ZCL, NV_ITEM_ZCL_WINDOWCOVERING, sizeof(zcl_nv_WindowCovering_t), (u8 *)&zcl_nv_WindowCovering);
-	}
-
-#else
-	st = NV_ENABLE_PROTECT_ERROR;
-#endif
-
-	return st;
-}
-
-/*********************************************************************
- * @fn      zcl_PositionLiftPercentageAttr_restore
- *
- * @brief
- *
- * @param   None
- *
- * @return
- */
-nv_sts_t zcl_WindowCoveringAttr_restore(void)
-{
-	nv_sts_t st = NV_SUCC;
-
-#if NV_ENABLE
-	zcl_nv_WindowCovering_t zcl_nv_WindowCovering;
-
-	st = nv_flashReadNew(1, NV_MODULE_ZCL, NV_ITEM_ZCL_WINDOWCOVERING, sizeof(zcl_nv_WindowCovering_t), (u8 *)&zcl_nv_WindowCovering);
-
-	if (st == NV_SUCC)
-	{
-		g_zcl_WindowCoveringAttrs.LiftTimeDown = zcl_nv_WindowCovering.LiftTimeDown;
-		g_zcl_WindowCoveringAttrs.LiftTimeUp = zcl_nv_WindowCovering.LiftTimeUp;
-		g_zcl_WindowCoveringAttrs.ReverseWaitTime = zcl_nv_WindowCovering.ReverseWaitTime;
-		g_zcl_WindowCoveringAttrs.TiltMoveTime = zcl_nv_WindowCovering.TiltMoveTime;
-		g_zcl_WindowCoveringAttrs.ReverseFlags = zcl_nv_WindowCovering.ReverseFlags;
-
-		if(zcl_nv_WindowCovering.ReverseFlags & 1){
-			g_zcl_WindowCoveringAttrs.Mode |= 0x1;
-			g_zcl_WindowCoveringAttrs.ConfigStatus |= 0x4;
-		}
-		else
-		{
-			g_zcl_WindowCoveringAttrs.Mode &= ~0x1;
-			g_zcl_WindowCoveringAttrs.ConfigStatus &= ~0x4;
-		}
-	}
-#else
-	st = NV_ENABLE_PROTECT_ERROR;
-#endif
-
-	return st;
-}
 
 /*********************************************************************
  * @fn      zcl_tuyaShutterAttrsInit

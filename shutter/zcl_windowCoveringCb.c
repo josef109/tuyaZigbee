@@ -75,13 +75,7 @@ typedef struct
 /**********************************************************************
  * LOCAL VARIABLES
  */
-static zcl_CoveringInfo_t coveringInfo = {
-	.destinationLiftPerc256 = 0,
-	.currentLiftPerc256 = 0,
-	.destinationTiltPerc256 = 0,
-	.currentTiltPerc256 = 0,
-	.stepUpTiltPerc256 = 0,
-};
+static zcl_CoveringInfo_t coveringInfo;
 
 static ev_timer_event_t *levelTimerEvt = NULL;
 
@@ -109,7 +103,7 @@ void powerOff(void)
 
 void moveUp(void)
 {
-	if (g_zcl_WindowCoveringAttrs.ReverseFlags & 1)
+	if (g_zcl_nv_WindowCovering.ReverseFlags & 1)
 	{
 		pin_off(RELAY_UP);
 		pin_on(RELAY_DOWN);
@@ -123,7 +117,7 @@ void moveUp(void)
 
 void moveDown(void)
 {
-	if (g_zcl_WindowCoveringAttrs.ReverseFlags & 1)
+	if (g_zcl_nv_WindowCovering.ReverseFlags & 1)
 	{
 		pin_off(RELAY_DOWN);
 		pin_on(RELAY_UP);
@@ -155,11 +149,11 @@ void tuyaShutter_coverInit(void)
 
 	coveringInfo.state = IDLE;
 
-	coveringInfo.stepDownTiltPerc256 = (u16)(100 << 8) / g_zcl_WindowCoveringAttrs.TiltMoveTime; // 0 - 100     100% / 50
-	coveringInfo.stepUpTiltPerc256 = -(s16)((u16)(100 << 8) / g_zcl_WindowCoveringAttrs.TiltMoveTime);
+	coveringInfo.stepDownTiltPerc256 = (u16)(100 << 8) / g_zcl_nv_WindowCovering.TiltMoveTime; // 0 - 100     100% / 50
+	coveringInfo.stepUpTiltPerc256 = -(s16)((u16)(100 << 8) / g_zcl_nv_WindowCovering.TiltMoveTime);
 
-	coveringInfo.stepDownLiftPerc256 = (u16)(100 << 8) / g_zcl_WindowCoveringAttrs.LiftTimeDown; // 57s
-	coveringInfo.stepUpLiftPerc256 = -(s16)((u16)(100 << 8) / g_zcl_WindowCoveringAttrs.LiftTimeUp);
+	coveringInfo.stepDownLiftPerc256 = (u16)(100 << 8) / g_zcl_nv_WindowCovering.LiftTimeDown; // 57s
+	coveringInfo.stepUpLiftPerc256 = -(s16)((u16)(100 << 8) / g_zcl_nv_WindowCovering.LiftTimeUp);
 
 	powerOff();
 }
@@ -332,7 +326,7 @@ static s32 tuyaShutter_levelTimerEvtCb(void *arg)
 		&& !checkmove(coveringInfo.currentTiltPerc256 , coveringInfo.destinationTiltPerc256, coveringInfo.stepUpTiltPerc256)))
 		{
 			coveringInfo.state = IDLE;
-			coveringInfo.lockTimerDown = g_zcl_WindowCoveringAttrs.ReverseWaitTime;
+			coveringInfo.lockTimerDown = g_zcl_nv_WindowCovering.ReverseWaitTime;
 			ret = doIdle();
 		}
 		else
@@ -350,7 +344,7 @@ static s32 tuyaShutter_levelTimerEvtCb(void *arg)
 		&& !checkmove(coveringInfo.currentTiltPerc256, coveringInfo.destinationTiltPerc256, coveringInfo.stepDownTiltPerc256)))
 		{
 			coveringInfo.state = IDLE;
-			coveringInfo.lockTimerUp = g_zcl_WindowCoveringAttrs.ReverseWaitTime;
+			coveringInfo.lockTimerUp = g_zcl_nv_WindowCovering.ReverseWaitTime;
 			ret = doIdle();
 		}
 		else
@@ -362,7 +356,7 @@ static s32 tuyaShutter_levelTimerEvtCb(void *arg)
 		&& coveringInfo.endTimer == 0))
 		{
 			coveringInfo.state = IDLE;
-			coveringInfo.lockTimerDown = g_zcl_WindowCoveringAttrs.ReverseWaitTime;
+			coveringInfo.lockTimerDown = g_zcl_nv_WindowCovering.ReverseWaitTime;
 			ret = doIdle();
 		}
 		else
@@ -374,7 +368,7 @@ static s32 tuyaShutter_levelTimerEvtCb(void *arg)
 		&& coveringInfo.endTimer == 0))
 		{
 			coveringInfo.state = IDLE;
-			coveringInfo.lockTimerUp = g_zcl_WindowCoveringAttrs.ReverseWaitTime;
+			coveringInfo.lockTimerUp = g_zcl_nv_WindowCovering.ReverseWaitTime;
 			ret = doIdle();
 		}
 		else

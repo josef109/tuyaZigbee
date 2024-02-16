@@ -177,7 +177,7 @@ void buttonShortPressed(u8 btNum){
 	{
 		if (!moveFlag())
 		{
-			if (g_zcl_WindowCoveringAttrs.ReverseFlags & 2)
+			if (g_zcl_nv_WindowCovering.ReverseFlags & 2)
 				tuyaShutter_openProcess();
 			else 
 				tuyaShutter_closeProcess();
@@ -195,7 +195,7 @@ void buttonShortPressed(u8 btNum){
 	{
 		if (!moveFlag())
 		{
-			if (g_zcl_WindowCoveringAttrs.ReverseFlags & 2)
+			if (g_zcl_nv_WindowCovering.ReverseFlags & 2)
 				tuyaShutter_closeProcess();
 			else
 				tuyaShutter_openProcess();

@@ -163,11 +163,11 @@ typedef struct
 	u8 Mode;
 	u8 IntermediateSetpointsLift[3];  // “1,0x0000”
 	u8 IntermediateSetpointsTilt[3];  // “1,0x0000”
-    u16 LiftTimeUp;
-	u16 LiftTimeDown;
-	u8 ReverseWaitTime;
-	u8 TiltMoveTime;
-	u8 ReverseFlags;
+    // u16 LiftTimeUp;
+	// u16 LiftTimeDown;
+	// u8 ReverseWaitTime;
+	// u8 TiltMoveTime;
+	// u8 ReverseFlags;
 } zcl_WindowCoveringAttr_t;
 
 /**********************************************************************
@@ -193,6 +193,7 @@ extern zcl_identifyAttr_t g_zcl_identifyAttrs;
 extern zcl_groupAttr_t g_zcl_groupAttrs;
 extern zcl_sceneAttr_t g_zcl_sceneAttrs;
 extern zcl_WindowCoveringAttr_t g_zcl_WindowCoveringAttrs;
+extern zcl_nv_WindowCovering_t g_zcl_nv_WindowCovering;
 
 #define zcl_sceneAttrGet()		&g_zcl_sceneAttrs
 #define zcl_WindowCoveringGet()		&g_zcl_WindowCoveringAttrs
@@ -225,6 +226,7 @@ void tuyaShutter_openProcess(void);
 void tuyaShutter_closeProcess(void);
 void tuyaShutter_stopProcess(void);
 bool moveFlag(void);
+nv_sts_t zcl_WindowCoveringAttr_restore(void);
 
 #if AF_TEST_ENABLE
 void afTest_rx_handler(void *arg);

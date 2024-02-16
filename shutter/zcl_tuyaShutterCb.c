@@ -88,7 +88,7 @@ static ev_timer_event_t *identifyTimerEvt = NULL;
  */
 void tuyaShutter_zclProcessIncomingMsg(zclIncoming_t *pInHdlrMsg)
 {
-	u8 status = ZCL_STA_SUCCESS;
+	//u8 status = ZCL_STA_SUCCESS;
 
 	printf("tuyaShutter_zclProcessIncomingMsg %d\n", pInHdlrMsg->hdr.cmd);
 
@@ -202,16 +202,22 @@ static void tuyaShutter_zclWriteReqCmd(u16 clusterId, zclWriteCmd_t *pWriteReqCm
 					{
 						//zcl_setAttrVal(TUYA_SHUTTER_ENDPOINT, ZCL_CLUSTER_CLOSURES_WINDOW_COVERING,attr[i].attrID,attr[i].attrData); 
 						g_zcl_WindowCoveringAttrs.ConfigStatus |= 0x4;
-						g_zcl_WindowCoveringAttrs.ReverseFlags |= 0x1;
+						g_zcl_nv_WindowCovering.ReverseFlags |= 0x1;
 					}
 					else
 					{
 						g_zcl_WindowCoveringAttrs.ConfigStatus &= ~0x4;
-						g_zcl_WindowCoveringAttrs.ReverseFlags &= ~0x1;
+						g_zcl_nv_WindowCovering.ReverseFlags &= ~0x1;
 					}
 					gShutterCtx.shutterAttrsChanged = TRUE;
 			 	break;
-
+				case 0x200:
+				case 0x201:
+				case 0x202:
+				case 0x203:
+				case 0x204:
+					gShutterCtx.shutterAttrsChanged = TRUE;
+					break;
 			}
 			//zcl_setAttrVal(TUYA_SHUTTER_ENDPOINT, ZCL_CLUSTER_CLOSURES_WINDOW_COVERING,attr[i].attrID,attr[i].attrData); 
 		}

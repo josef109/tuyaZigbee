@@ -207,8 +207,9 @@ void tuyaShutterAttrsStoreTimerStart(void)
 
 void tuyaShutterAttrsChk(void)
 {
-	if(gShutterCtx.shutterAttrsChanged){
+	if(gShutterCtx.shutterAttrsChanged && !moveFlag()){
 		gShutterCtx.shutterAttrsChanged = FALSE;
+		tuyaShutter_coverInit();
 		if(zb_isDeviceJoinedNwk()){
 			tuyaShutterAttrsStoreTimerStart();
 		}
