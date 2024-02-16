@@ -71,6 +71,7 @@ typedef struct{
 typedef struct{
 	ev_timer_event_t *timerLedEvt;
 	u32 keyPressedTime;
+	u32 keyPressedTimeUpDown;
 
 	u16 ledOnTime;
 	u16 ledOffTime;
@@ -80,7 +81,7 @@ typedef struct{
 	u8  state;
 
 	bool bdbFindBindFlg;
-	bool lightAttrsChanged;
+	bool shutterAttrsChanged;
 
 	app_linkKey_info_t tcLinkKey;
 }app_ctx_t;
@@ -137,6 +138,7 @@ typedef struct {
 	u16 LiftTimeDown;
 	u8 ReverseWaitTime;
 	u8 TiltMoveTime;
+	u8 ReverseFlags;
 }zcl_nv_WindowCovering_t;
 
 typedef struct
@@ -165,6 +167,7 @@ typedef struct
 	u16 LiftTimeDown;
 	u8 ReverseWaitTime;
 	u8 TiltMoveTime;
+	u8 ReverseFlags;
 } zcl_WindowCoveringAttr_t;
 
 /**********************************************************************
@@ -172,7 +175,7 @@ typedef struct
  */
 extern app_ctx_t gShutterCtx;
 extern bdb_commissionSetting_t g_bdbCommissionSetting;
-extern bdb_appCb_t g_zbDemoBdbCb;
+extern bdb_appCb_t g_zbShutterBdbCb;
 
 
 extern u8 TUYASHUTTER_CB_CLUSTER_NUM;
@@ -181,6 +184,7 @@ extern const af_simple_descriptor_t tuyaShutter_simpleDesc;
 #if AF_TEST_ENABLE
 extern const af_simple_descriptor_t sampleTestDesc;
 #endif
+
 
 
 /* Attributes */
@@ -217,6 +221,10 @@ void zcl_tuyaShutterAttrsInit(void);
 nv_sts_t zcl_WindowCoveringAttr_save(void);
 
 void tuyaShutter_coverInit(void);
+void tuyaShutter_openProcess(void);
+void tuyaShutter_closeProcess(void);
+void tuyaShutter_stopProcess(void);
+bool moveFlag(void);
 
 #if AF_TEST_ENABLE
 void afTest_rx_handler(void *arg);

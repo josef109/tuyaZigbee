@@ -202,13 +202,13 @@ void tuyaShutterAttrsStoreTimerStart(void)
 	if(tuyaShutterAttrsStoreTimerEvt){
 		TL_ZB_TIMER_CANCEL(&tuyaShutterAttrsStoreTimerEvt);
 	}
-	tuyaShutterAttrsStoreTimerEvt = TL_ZB_TIMER_SCHEDULE(tuyaShutterAttrsStoreTimerCb, NULL, 1000);//200);
+	tuyaShutterAttrsStoreTimerEvt = TL_ZB_TIMER_SCHEDULE(tuyaShutterAttrsStoreTimerCb, NULL, 1000);   //200);
 }
 
 void tuyaShutterAttrsChk(void)
 {
-	if(gShutterCtx.lightAttrsChanged){
-		gShutterCtx.lightAttrsChanged = FALSE;
+	if(gShutterCtx.shutterAttrsChanged){
+		gShutterCtx.shutterAttrsChanged = FALSE;
 		if(zb_isDeviceJoinedNwk()){
 			tuyaShutterAttrsStoreTimerStart();
 		}
@@ -312,7 +312,7 @@ void user_init(bool isRetention)
 
 
     /* Initialize BDB */
-	bdb_init((af_simple_descriptor_t *)&tuyaShutter_simpleDesc, &g_bdbCommissionSetting, &g_zbDemoBdbCb, 1);
+	bdb_init((af_simple_descriptor_t *)&tuyaShutter_simpleDesc, &g_bdbCommissionSetting, &g_zbShutterBdbCb, 1);
 
 	tuyaShutter_coverInit();
 }

@@ -148,17 +148,22 @@ void light_blink_stop(void)
 }
 
 void buttonKeepPressed(u8 btNum){
+
+	printf("Button keep pressed %d\n",btNum);
+
 	if(btNum == VK_SW1){
 		gShutterCtx.state = APP_FACTORY_NEW_DOING;
 		zb_factoryReset();
 	}else if(btNum == VK_SW2){
-
+		;
 	}
 }
 
 void buttonShortPressed(u8 btNum){
+
+	printf("buttonShortPressed %d\n",btNum);
+
 	if(btNum == VK_SW1){
-		printf("Button keep pressed SW1\n");
 		if(zb_isDeviceJoinedNwk()){
 			gShutterCtx.sta = !gShutterCtx.sta;
 			// if(gShutterCtx.sta){
@@ -167,16 +172,36 @@ void buttonShortPressed(u8 btNum){
 			// 	tuyaShutter_onoff(ZCL_ONOFF_STATUS_OFF);
 			// }
 		}
-	}else if(btNum == VK_SW2){
-		printf("Button keep pressed SW2\n");
+	}
+	else if (btNum == VK_SW2)
+	{
+		if (!moveFlag())
+		{
+			if (g_zcl_WindowCoveringAttrs.ReverseFlags & 2)
+				tuyaShutter_openProcess();
+			else 
+				tuyaShutter_closeProcess();
+		}
+		else
+			tuyaShutter_stopProcess();
+
 		/* toggle local permit Joining */
 		// u8 duration = zb_getMacAssocPermit() ? 0 : 180;
 		// zb_nlmePermitJoiningRequest(duration);
 
 		// gpsCommissionModeInvork();
 	}
-	else if(btNum == VK_SW3){
-		printf("Button keep pressed SW3\n");
+	else if (btNum == VK_SW3)
+	{
+		if (!moveFlag())
+		{
+			if (g_zcl_WindowCoveringAttrs.ReverseFlags & 2)
+				tuyaShutter_closeProcess();
+			else
+				tuyaShutter_openProcess();
+		}
+		else
+			tuyaShutter_stopProcess();
 		/* toggle local permit Joining */
 		// u8 duration = zb_getMacAssocPermit() ? 0 : 180;
 		// zb_nlmePermitJoiningRequest(duration);
@@ -185,25 +210,41 @@ void buttonShortPressed(u8 btNum){
 	}
 }
 
-void keyScan_keyPressedCB(kb_data_t *kbEvt){
-//	u8 toNormal = 0;
+void keyScan_keyPressedCB(kb_data_t *kbEvt)
+{
+	//	u8 toNormal = 0;
 	u8 keyCode = kbEvt->keycode[0];
-//	static u8 lastKeyCode = 0xff;
+	//	static u8 lastKeyCode = 0xff;
 
 	buttonShortPressed(keyCode);
 
-	if(keyCode == VK_SW1){
+	if (keyCode == VK_SW1)
+	{
 		gShutterCtx.keyPressedTime = clock_time();
 		gShutterCtx.state = APP_FACTORY_NEW_SET_CHECK;
 	}
+	if ((keyCode == VK_SW2) || (keyCode == VK_SW3))
+		gShutterCtx.keyPressedTimeUpDown = clock_time();
 }
 
+void keyScan_keyReleasedCB(u8 keyCode)
+{
+	printf("Button keep pressed %d\n", keyCode);
+	if (keyCode == VK_SW1)
+	{
+		gShutterCtx.state = APP_STATE_NORMAL;
+	}
+	if((keyCode == VK_SW2) || (keyCode == VK_SW3))
+	{
+		if(clock_time_exceed(gShutterCtx.keyPressedTimeUpDown, 2*600*1000))
+			;
+		else if(moveFlag())
+			tuyaShutter_stopProcess();
 
-void keyScan_keyReleasedCB(u8 keyCode){
-	gShutterCtx.state = APP_STATE_NORMAL;
+	}
 }
 
-volatile u8 T_keyPressedNum = 0;
+//volatile u8 T_keyPressedNum = 0;
 void app_key_handler(void){
 	static u8 valid_keyCode = 0xff;
 
@@ -214,7 +255,7 @@ void app_key_handler(void){
 	}
 
 	if(kb_scan_key(0 , 1)){
-		T_keyPressedNum++;
+//		T_keyPressedNum++;
 		if(kb_event.cnt){
 			keyScan_keyPressedCB(&kb_event);
 			if(kb_event.cnt == 1){

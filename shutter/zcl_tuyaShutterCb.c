@@ -180,11 +180,11 @@ static void tuyaShutter_zclReadRspCmd(zclReadRspCmd_t *pReadRspCmd)
 static void tuyaShutter_zclWriteReqCmd(u16 clusterId, zclWriteCmd_t *pWriteReqCmd)
 {
 	printf("tuyaShutter_zclWriteReqCmd\n");
-	// u8 numAttr = pWriteReqCmd->numAttr;
-	// zclWriteRec_t *attr = pWriteReqCmd->attrList;
+	u8 numAttr = pWriteReqCmd->numAttr;
+	zclWriteRec_t *attr = pWriteReqCmd->attrList;
 
-	// if (clusterId == ZCL_CLUSTER_CLOSURES_WINDOW_COVERING)
-	// {
+	if (clusterId == ZCL_CLUSTER_CLOSURES_WINDOW_COVERING)
+	{
 	// 	for (u8 i = 0; i < numAttr; i++)
 	// 	{
 	// 		if (attr[i].attrID == ZCL_ATTRID_START_UP_ONOFF)
@@ -192,17 +192,30 @@ static void tuyaShutter_zclWriteReqCmd(u16 clusterId, zclWriteCmd_t *pWriteReqCm
 	// 			zcl_WindowCoveringAttr_save();
 	// 		}
 	// 	}
-	// 	for (u8 i = 0; i < numAttr; i++)
-	// 	{
-	// 		printf("WriteReq: %d %d %d\n", i, attr[i].attrID, *(attr[i].attrData));
-	// 		switch (attr[i].attrID)
-	// 		{
-	// 		case ZCL_ATTRID_MODE:
-	// 			g_zcl_WindowCoveringAttrs.Mode = *(attr[i].attrData);
-	// 			break;
-	// 		}
-	// 	}
-	// }
+		for (u8 i = 0; i < numAttr; i++)
+		{
+			printf("WriteReq: %d %d %d\n", i, attr[i].attrID, *(attr[i].attrData));
+			switch (attr[i].attrID)
+			{
+				case ZCL_ATTRID_MODE:
+					if(*(attr[i].attrData) & 0x1)
+					{
+						//zcl_setAttrVal(TUYA_SHUTTER_ENDPOINT, ZCL_CLUSTER_CLOSURES_WINDOW_COVERING,attr[i].attrID,attr[i].attrData); 
+						g_zcl_WindowCoveringAttrs.ConfigStatus |= 0x4;
+						g_zcl_WindowCoveringAttrs.ReverseFlags |= 0x1;
+					}
+					else
+					{
+						g_zcl_WindowCoveringAttrs.ConfigStatus &= ~0x4;
+						g_zcl_WindowCoveringAttrs.ReverseFlags &= ~0x1;
+					}
+					gShutterCtx.shutterAttrsChanged = TRUE;
+			 	break;
+
+			}
+			//zcl_setAttrVal(TUYA_SHUTTER_ENDPOINT, ZCL_CLUSTER_CLOSURES_WINDOW_COVERING,attr[i].attrID,attr[i].attrData); 
+		}
+	}
 }
 
 /*********************************************************************
@@ -216,6 +229,7 @@ static void tuyaShutter_zclWriteReqCmd(u16 clusterId, zclWriteCmd_t *pWriteReqCm
  */
 static void tuyaShutter_zclWriteRspCmd(zclWriteRspCmd_t *pWriteRspCmd)
 {
+
 	printf("tuyaShutter_zclWriteRspCmd\n");
 }
 #endif

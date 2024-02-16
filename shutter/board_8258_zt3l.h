@@ -97,7 +97,7 @@ extern "C" {
 enum{
 	VK_SW1 = 0x01,
 	VK_SW2 = 0x02,
-	VK_SW3 = 0x02,
+	VK_SW3 = 0x03,
 };
 
 #define	KB_MAP_NORMAL	{\

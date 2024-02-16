@@ -50,15 +50,15 @@
 /**********************************************************************
  * LOCAL FUNCTIONS
  */
-void zbdemo_bdbInitCb(u8 status, u8 joinedNetwork);
-void zbdemo_bdbCommissioningCb(u8 status, void *arg);
-void zbdemo_bdbIdentifyCb(u8 endpoint, u16 srcAddr, u16 identifyTime);
+void zbShutter_bdbInitCb(u8 status, u8 joinedNetwork);
+void zbShutter_bdbCommissioningCb(u8 status, void *arg);
+void zbShutter_bdbIdentifyCb(u8 endpoint, u16 srcAddr, u16 identifyTime);
 
 
 /**********************************************************************
  * GLOBAL VARIABLES
  */
-bdb_appCb_t g_zbDemoBdbCb = {zbdemo_bdbInitCb, zbdemo_bdbCommissioningCb, zbdemo_bdbIdentifyCb, NULL};
+bdb_appCb_t g_zbShutterBdbCb = {zbShutter_bdbInitCb, zbShutter_bdbCommissioningCb, zbShutter_bdbIdentifyCb, NULL};
 
 #ifdef ZCL_OTA
 ota_callBack_t tuyaShutter_otaCb =
@@ -107,7 +107,7 @@ s32 tuyaShutter_bdbFindAndBindStart(void *arg){
 #endif
 
 /*********************************************************************
- * @fn      zbdemo_bdbInitCb
+ * @fn      zbShutter_bdbInitCb
  *
  * @brief   application callback for bdb initiation
  *
@@ -117,7 +117,7 @@ s32 tuyaShutter_bdbFindAndBindStart(void *arg){
  *
  * @return  None
  */
-void zbdemo_bdbInitCb(u8 status, u8 joinedNetwork){
+void zbShutter_bdbInitCb(u8 status, u8 joinedNetwork){
 	printf("bdbInitCb: sta = %x, joined = %x\n", status, joinedNetwork);
 
 	if(status == BDB_INIT_STATUS_SUCCESS){
@@ -154,7 +154,7 @@ void zbdemo_bdbInitCb(u8 status, u8 joinedNetwork){
 }
 
 /*********************************************************************
- * @fn      zbdemo_bdbCommissioningCb
+ * @fn      zbShutter_bdbCommissioningCb
  *
  * @brief   application callback for bdb commissioning
  *
@@ -164,7 +164,7 @@ void zbdemo_bdbInitCb(u8 status, u8 joinedNetwork){
  *
  * @return  None
  */
-void zbdemo_bdbCommissioningCb(u8 status, void *arg){
+void zbShutter_bdbCommissioningCb(u8 status, void *arg){
 //	printf("bdbCommCb: sta = %x\n", status);
 
 	switch(status){
@@ -224,7 +224,7 @@ void zbdemo_bdbCommissioningCb(u8 status, void *arg){
 
 
 extern void tuyaShutter_zclIdentifyCmdHandler(u8 endpoint, u16 srcAddr, u16 identifyTime);
-void zbdemo_bdbIdentifyCb(u8 endpoint, u16 srcAddr, u16 identifyTime){
+void zbShutter_bdbIdentifyCb(u8 endpoint, u16 srcAddr, u16 identifyTime){
 #if FIND_AND_BIND_SUPPORT
 	tuyaShutter_zclIdentifyCmdHandler(endpoint, srcAddr, identifyTime);
 #endif
