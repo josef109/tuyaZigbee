@@ -149,11 +149,24 @@ void tuyaShutter_coverInit(void)
 
 	coveringInfo.state = IDLE;
 
-	coveringInfo.stepDownTiltPerc256 = (u16)(100 << 8) / g_zcl_nv_WindowCovering.TiltMoveTime; // 0 - 100     100% / 50
-	coveringInfo.stepUpTiltPerc256 = -(s16)((u16)(100 << 8) / g_zcl_nv_WindowCovering.TiltMoveTime);
+	if(g_zcl_nv_WindowCovering.TiltMoveTime == 0) {
+		coveringInfo.stepDownTiltPerc256 = 255;
+		coveringInfo.stepUpTiltPerc256 = 255;
+	}
+	else {
+		coveringInfo.stepDownTiltPerc256 = (u16)(100 << 8) / g_zcl_nv_WindowCovering.TiltMoveTime; // 0 - 100     100% / 50
+		coveringInfo.stepUpTiltPerc256 = -(s16)((u16)(100 << 8) / g_zcl_nv_WindowCovering.TiltMoveTime);
+	}
+	
+	if(g_zcl_nv_WindowCovering.LiftTimeDown == 0)
+		coveringInfo.stepDownLiftPerc256 = 255;
+	else
+		coveringInfo.stepDownLiftPerc256 = (u16)(100 << 8) / g_zcl_nv_WindowCovering.LiftTimeDown; // 57s
 
-	coveringInfo.stepDownLiftPerc256 = (u16)(100 << 8) / g_zcl_nv_WindowCovering.LiftTimeDown; // 57s
-	coveringInfo.stepUpLiftPerc256 = -(s16)((u16)(100 << 8) / g_zcl_nv_WindowCovering.LiftTimeUp);
+	if(g_zcl_nv_WindowCovering.LiftTimeUp == 0)
+		coveringInfo.stepUpLiftPerc256 = 255;
+	else
+		coveringInfo.stepUpLiftPerc256 = -(s16)((u16)(100 << 8) / g_zcl_nv_WindowCovering.LiftTimeUp);
 
 	powerOff();
 }
@@ -215,7 +228,7 @@ void doUp(void)
 		if (coveringInfo.destinationLiftPerc256 == 0)
 		{
 			if (coveringInfo.destinationTiltPerc256 == 0)
-				coveringInfo.endTimer = 200;
+				coveringInfo.endTimer = g_zcl_nv_WindowCovering.LiftTimeUp;
 			else
 				coveringInfo.endTimer = 20;
 		}
@@ -223,7 +236,11 @@ void doUp(void)
 			coveringInfo.endTimer = 0;
 	}
 	else if(coveringInfo.endTimer > 0)
+	{
+		if ((coveringInfo.destinationTiltPerc256 > 0) && (coveringInfo.endTimer > 20))
+			coveringInfo.endTimer = 20;
 		--coveringInfo.endTimer;
+	}
 	moveUp();
 	printf("doUp endtimer: %d currentLiftPerc256: %d\n", coveringInfo.endTimer, coveringInfo.currentLiftPerc256);
 }
@@ -237,15 +254,19 @@ void doDown(void)
 		{
 			coveringInfo.currentLiftPerc256 = 100 << 8;
 			if (coveringInfo.destinationTiltPerc256 >= (100 << 8))
-				coveringInfo.endTimer = 200;
+				coveringInfo.endTimer = g_zcl_nv_WindowCovering.LiftTimeDown;
 			else
 				coveringInfo.endTimer = 20;
 		}
 		else
 			coveringInfo.endTimer = 0;
 	}
-	else if(coveringInfo.endTimer > 0)
+	else if(coveringInfo.endTimer > 0)	
+	{		
+		if ((coveringInfo.destinationTiltPerc256 < (100 << 8)) && (coveringInfo.endTimer > 20))
+			coveringInfo.endTimer = 20;
 		--coveringInfo.endTimer;
+	}
 	moveDown();
 	printf("doDown endtimer: %d currentLiftPerc256: %d\n", coveringInfo.endTimer, coveringInfo.currentLiftPerc256);
 }
@@ -316,8 +337,10 @@ static s32 tuyaShutter_levelTimerEvtCb(void *arg)
 		break;
 	case OPEN_TILT:
 		if ((coveringInfo.currentTiltPerc256 == 0) 
-		&& checkmove(coveringInfo.currentLiftPerc256, coveringInfo.destinationLiftPerc256, coveringInfo.stepUpLiftPerc256))
+		&& (checkmove(coveringInfo.currentLiftPerc256, coveringInfo.destinationLiftPerc256, coveringInfo.stepUpLiftPerc256)
+		|| coveringInfo.destinationLiftPerc256 == 0))
 		{
+			coveringInfo.endTimer = g_zcl_nv_WindowCovering.LiftTimeUp;
 			coveringInfo.state = UP;
 			doUp();
 		}
@@ -334,8 +357,10 @@ static s32 tuyaShutter_levelTimerEvtCb(void *arg)
 		break;
 	case CLOSE_TILT:
 		if ((coveringInfo.currentTiltPerc256 == (100 << 8)) 
-		&& checkmove(coveringInfo.currentLiftPerc256, coveringInfo.destinationLiftPerc256, coveringInfo.stepDownLiftPerc256))
+		&& (checkmove(coveringInfo.currentLiftPerc256, coveringInfo.destinationLiftPerc256, coveringInfo.stepDownLiftPerc256)
+		|| coveringInfo.destinationLiftPerc256 == (100 << 8)))
 		{
+			coveringInfo.endTimer = g_zcl_nv_WindowCovering.LiftTimeDown;
 			coveringInfo.state = DOWN;
 			doDown();
 		}
@@ -365,7 +390,7 @@ static s32 tuyaShutter_levelTimerEvtCb(void *arg)
 	case DOWN:
 		if (checkmove(coveringInfo.currentLiftPerc256, coveringInfo.destinationLiftPerc256, coveringInfo.stepUpLiftPerc256)
 		|| (!checkmove(coveringInfo.currentLiftPerc256, coveringInfo.destinationLiftPerc256, coveringInfo.stepDownLiftPerc256)
-		&& coveringInfo.endTimer == 0))
+		&& (coveringInfo.endTimer == 0)))
 		{
 			coveringInfo.state = IDLE;
 			coveringInfo.lockTimerUp = g_zcl_nv_WindowCovering.ReverseWaitTime;

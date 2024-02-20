@@ -286,8 +286,8 @@ zcl_WindowCoveringAttr_t g_zcl_WindowCoveringAttrs =
 // #endif    /* ZCL_IAS_ZONE */
 // #endif
 zcl_nv_WindowCovering_t g_zcl_nv_WindowCovering = {
-	.LiftTimeUp = 570,
-	.LiftTimeDown = 570,
+	.LiftTimeUp = 590 - 16,
+	.LiftTimeDown = 570- 16,
 	.ReverseWaitTime = 15,
 	.TiltMoveTime = 16,
 	.ReverseFlags = 0,

@@ -49,6 +49,16 @@ static void tuyaShutter_sceneRecallReqHandler(zclIncomingAddrInfo_t *pAddrInfo, 
 {
 	u8 extLen = 0;
 
+	u8 lift = pScene->extField[extLen+3];
+	extLen += 4;
+	zcl_goToLiftPer_t goToLiftPer;
+	goToLiftPer.perLiftValue = lift;
+	tuyaShutter_windowCoveringCb(pAddrInfo, ZCL_CMD_GO_TO_LIFT_PERCENTAGE, &goToLiftPer);
+
+	u8 tilt = pScene->extField[extLen++];
+	zcl_goToTiltPer_t goToTiltPer;
+	goToTiltPer.perTiltValue = tilt;
+	tuyaShutter_windowCoveringCb(pAddrInfo, ZCL_CMD_GO_TO_TILT_PERCENTAGE, &goToTiltPer);
 
 }
 
@@ -66,6 +76,14 @@ static void tuyaShutter_sceneStoreReqHandler(zcl_sceneEntry_t *pScene)
 {
 	/* receive Store Scene Request command, get the latest Scene info to save */
 	u8 extLen = 0;
+
+	zcl_WindowCoveringAttr_t *pLevel = zcl_WindowCoveringGet();
+
+	pScene->extField[extLen++] = LO_UINT16(ZCL_CLUSTER_CLOSURES_WINDOW_COVERING);
+	pScene->extField[extLen++] = HI_UINT16(ZCL_CLUSTER_CLOSURES_WINDOW_COVERING);
+	pScene->extField[extLen++] = 2;
+	pScene->extField[extLen++] = pLevel->CurrentPositionLiftPercentage;
+	pScene->extField[extLen++] = pLevel->CurrentPositionTiltPercentage;
 
 	pScene->extFieldLen = extLen;
 }
